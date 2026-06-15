@@ -37,6 +37,11 @@ export default defineEventHandler(async (event) => {
   })
 
   const data = await response.json()
+  if (data.error) {
+    return {
+        route: `Ошибка АПИ: ${data.error.message}`
+    }
+  }
 
   return {
     route: data.choices?.[0]?.message?.content || JSON.stringify(data, null, 2)

@@ -8,6 +8,7 @@ export default defineEventHandler(async (event) => {
 Место: ${body.place}
 Количество дней: ${body.days}
 Бюджет: ${body.budget} рублей
+Тип отдыха: ${body.travelType}
 
 Ответь на русском языке.
 Формат:
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
       Authorization: `Bearer ${config.openaiApiKey}`
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: 'qwen3-vl-plus',
       messages: [
         {
           role: 'user',

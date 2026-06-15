@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
       Authorization: `Bearer ${config.openaiApiKey}`
     },
     body: JSON.stringify({
-      model: 'qwen3-vl-plus',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'user',

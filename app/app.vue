@@ -111,7 +111,7 @@ async function generateRoute() {
 
     <transition name="slide-up">
       <section v-if="showPlanner" class="planner-card">
-        <button class="close-btn" @click="showPlanner = false">×</button>
+        <button class="close-btn" @click="showPlanner = false; result = ''; days = ''; budget = ''">×</button>
       <h2>Собрать маршрут</h2>
       <input v-model="place" placeholder="Куда хотите поехать?" />
       <input v-model="days" placeholder="Сколько дней?" />

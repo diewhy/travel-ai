@@ -13,6 +13,18 @@ const formattedResult = computed (() => {
   .replace (/\n/g, '<br>')
 })
 const showPlanner = ref(false)
+const destinationImages = {
+  'Алтай' : '/altai.jpg',
+  'Байкал' : '/baikal.jpg',
+  'Карелия' : '/karelia.jpg',
+  'Камчатка' : '/kamchatka.jpg',
+  'Дагестан' : '/dagestan.jpg',
+  'Сочи' : '/sachi.jpg'
+}
+
+const currentDestinationImage = computed(() => {
+  return destinationImages[place.value] || '/fon.png'
+})
 function selectDestination(name) {
   place.value = name
   showPlanner.value = true
@@ -136,6 +148,9 @@ async function generateRoute() {
 </main>
 
     <section v-if="result" class="result-wrap">
+    <div class="result-image">
+      <img :src="currentDestinationImage" :alt="place">
+    </div>
   <div class="route-header">
     <div>
       <p class="route-label">Ваш маршрут готов</p>
@@ -663,5 +678,22 @@ button:hover {
   line-height: 1;
   cursor: pointer;
   box-shadow: none;
+}
+
+.result-image {
+  width: 100%;
+  height: 260px;
+  border-radius: 26px;
+  overflow: hidden;
+  margin-bottom: 28px;
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow: 0 24px 70px rgba(0,0,0,.28);
+}
+
+.result-image {
+  width: 100%;
+  height: 100%;
+  object-fit:cover;
+  display: block;
 }
 </style>

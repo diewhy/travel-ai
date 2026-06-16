@@ -114,9 +114,21 @@ async function generateRoute() {
 </main>
 
     <section v-if="result" class="result-wrap">
-      <div class="result-title">Ваш маршрут готов</div>
-      <div class="result" v-html="formattedResult"></div>
-    </section>
+  <div class="route-header">
+    <div>
+      <p class="route-label">Ваш маршрут готов</p>
+      <h2>Маршрут по направлению: {{ place || 'Россия' }}</h2>
+    </div>
+
+    <div class="route-stats">
+      <span>📅 {{ days || '—' }} дней</span>
+      <span>💰 {{ budget || '—' }} ₽</span>
+      <span>🧭 {{ travelType }}</span>
+    </div>
+  </div>
+
+  <div class="result" v-html="formattedResult"></div>
+</section>
   </div>
 </template>
 
@@ -306,28 +318,88 @@ button:hover {
 }
 
 .result-wrap {
-  margin-top: 40px;
-  backdrop-filter: blur(20px);
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.15);
+  max-width: 1100px;
+  margin: 70px auto 0;
+  padding: 34px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.32);
   color: white;
 }
 
-.result-title {
-  font-size: 28px;
-  font-weight: 900;
-  margin-bottom: 18px;
-  color: #9b1c31;
+.route-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.route-label {
+  margin: 0 0 8px;
+  color: #38bdf8;
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.route-header h2 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.15;
+}
+
+.route-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.route-stats span {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .result {
-  line-height: 1.75;
-  font-size: 16px;
+  line-height: 1.8;
+  font-size: 17px;
+  color: rgba(255, 255, 255, 0.94);
 }
 
 .result h3 {
-  margin-top: 24px;
-  color: #0b2f5b;
+  margin: 26px 0 14px;
+  padding: 18px 22px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.28), rgba(0, 163, 255, 0.14));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: white;
+  font-size: 24px;
+}
+
+@media (max-width: 700px) {
+  .route-header {
+    flex-direction: column;
+  }
+
+  .route-stats {
+    justify-content: flex-start;
+  }
+
+  .route-header h2 {
+    font-size: 26px;
+  }
+
+  .result-wrap {
+    padding: 22px;
+  }
 }
 
 @media (max-width: 860px) {

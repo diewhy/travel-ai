@@ -153,11 +153,12 @@ body {
   color: white;
   position: relative;
   overflow: hidden;
+  isolation: isolate;
 }
 
 .page ::before {
   content: '';
-  position: absolute;
+  position: fixed;
   width: 500px;
   height: 500px;
   border-radius: 50%;
@@ -167,12 +168,12 @@ body {
   top: -150px;
   left: -150px;
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
 }
 
 .page ::after {
   content: '';
-  position: absolute;
+  position: fixed;
   width: 500px;
   height: 500px;
   border-radius: 50%;
@@ -182,7 +183,13 @@ body {
   top: -200;
   left: -150px;
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
+}
+
+.planner-card,
+.result-wrap {
+  position: relative;
+  z-index: 20;
 }
 
 .topbar {
@@ -318,7 +325,7 @@ button:hover {
 }
 
 .result-wrap {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 70px auto 0;
   padding: 34px;
   border-radius: 32px;
@@ -327,6 +334,7 @@ button:hover {
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 30px 100px rgba(0, 0, 0, 0.32);
   color: white;
+  width: 100%;
 }
 
 .route-header {
@@ -348,7 +356,7 @@ button:hover {
 
 .route-header h2 {
   margin: 0;
-  font-size: 34px;
+  font-size: 42px;
   line-height: 1.15;
 }
 
@@ -370,7 +378,7 @@ button:hover {
 
 .result {
   line-height: 1.8;
-  font-size: 17px;
+  font-size: 18px;
   color: rgba(255, 255, 255, 0.94);
 }
 

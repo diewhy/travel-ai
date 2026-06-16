@@ -148,9 +148,6 @@ async function generateRoute() {
 </main>
 
     <section v-if="result" class="result-wrap">
-    <div class="result-image">
-      <img :src="currentDestinationImage" :alt="place">
-    </div>
   <div class="route-header">
     <div>
       <p class="route-label">Ваш маршрут готов</p>
@@ -346,7 +343,6 @@ button:hover {
 }
 
 .result-wrap {
-  max-width: 1000px;
   margin: 50px auto 0;
   padding: 34px;
   border-radius: 32px;
@@ -682,18 +678,16 @@ button:hover {
 
 .result-image {
   width: 100%;
-  height: 260px;
-  border-radius: 26px;
+  height: 220px;
+  border-radius: 24px;
   overflow: hidden;
-  margin-bottom: 28px;
-  border: 1px solid rgba(255,255,255,.18);
-  box-shadow: 0 24px 70px rgba(0,0,0,.28);
+  margin-bottom: 25px;
 }
 
 .result-image {
   width: 100%;
   height: 100%;
   object-fit:cover;
-  display: block;
+  object-position: center;
 }
 </style>

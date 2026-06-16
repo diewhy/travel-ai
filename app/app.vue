@@ -1,6 +1,6 @@
 vue
 <script setup> 
-import {nextTick} from 'vue'
+import {nextTick, onMounted, onBeforeMount} from 'vue'
 
 const place = ref('')
 const days = ref('')
@@ -14,20 +14,73 @@ const formattedResult = computed (() => {
 })
 const showPlanner = ref(false)
 const destinationImages = {
-  'Алтай' : '/altai.jpg',
-  'Байкал' : '/baikal.jpg',
-  'Карелия' : '/karelia.jpg',
-  'Камчатка' : '/kamchatka.jpg',
-  'Дагестан' : '/dagestan.jpg',
-  'Сочи' : '/sachi.jpg'
+  'Алтай' : '/places/altai.jpg',
+  'Байкал' : '/places/baikal.jpg',
+  'Карелия' : '/places/karelia.jpg',
+  'Камчатка' : '/places/kamchatka.jpg',
+  'Дагестан' : '/places/dagestan.jpg', 
+  'Сочи' : '/places/sochi.jpg',
 }
 
 const currentDestinationImage = computed(() => {
   return destinationImages[place.value] || '/fon.png'
 })
+
+const destinationGalleries = {
+  'Алтай' : ['/places/altai.jpg', '/places/altai-2.jpg', '/places/altai-3.jpg'],
+  'Байкал' : ['/places/baikal.jpg', '/places/baikal-2.jpg', '/places/baikal-3.jpg'],
+  'Карелия' : ['/places/karelia.jpg', '/places/karelia-2.jpg', '/places/karelia-3.jpg'],
+  'Камчатка' : ['/places/kamchatka.jpg',  '/places/kamchatka-2.jpg', '/places/kamchatka-3.jpg'],
+  'Дагестан' : ['/places/dagestan.jpg',  '/places/dagestan-2.jpg', '/places/dagestan-3.jpg'],
+  'Сочи' : ['/places/sochi.jpg',  '/places/sochi-2.jpg', '/places/sochi-3.jpg']
+}
+
+const activeImageIndex = ref(0)
+
+let galleryTimer = null
+
+function startGalleryAutoplay () {
+  stopGalleryAutoplay ()
+  galleryTimer = setInterval(() => {
+    if (currentGallery.value.length > 1) {
+      activeImageIndex.value =
+        (activeImageIndex.value + 1) % currentGallery.value.length
+    }
+  }, 4000)
+}
+
+function stopGalleryAutoplay() {
+  if (galleryTimer) {
+    clearInterval(galleryTimer)
+    galleryTimer = null
+  }
+}
+
+onMounted(() => {
+  startGalleryAutoplay()
+})
+
+onBeforeUnmount(() => {
+  stopGalleryAutoplay()
+})
+
+const currentGallery = computed (() => {
+  return destinationGalleries[place.value] || [currentDestinationImage.value]
+})
+const activeRouteImage = computed (() => {
+  return currentGallery.value[activeImageIndex.value]
+})
+
+function setRouteImage(index) {
+  activeImageIndex.value = index
+  startGalleryAutoplay ()
+}
+
 function selectDestination(name) {
   place.value = name
   showPlanner.value = true
+  result.value = ''
+  activeImageIndex.value = 0
 }
 
 async function generateRoute() {
@@ -149,8 +202,18 @@ async function generateRoute() {
 
     <section v-if="result" class="result-wrap">
   <div class="route-header route-header-image"
-    :style="{backgroundImage: `linear-gradient(rgba(5,15,35,.45), rgba(5,15,35,.85)), url(${currentDestinationImage})`}"
+    :style="{backgroundImage: `linear-gradient(rgba(5,15,35,.35), rgba(5,15,35,.88)), url(${activeRouteImage})`}"
     >
+    <div class="route-gallery-dots">
+  <button
+    v-for="(image, index) in currentGallery"
+    :key="image"
+    type="button"
+    class="gallery-line"
+    :class="{ active: activeImageIndex === index }"
+    @click="setRouteImage(index)"
+  ></button>
+</div>
     <div>
       <p class="route-label">Ваш маршрут готов</p>
       <h2>Маршрут по направлению: {{ place || 'Россия' }}</h2>
@@ -170,13 +233,15 @@ async function generateRoute() {
 
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap');
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: 'Manrope', Arial, sans-serif;
   background:
     linear-gradient(rgba(4, 15, 35, 0.72), rgba(4, 15, 35, 0.82)
     ),
@@ -317,6 +382,7 @@ select {
   outline: none;
   background: rgba(225,225,225,.94);
   color: #0f172a;
+  font-family: 'Manrope', Arial, sans-serif;
 }
 
 input:focus,
@@ -337,6 +403,7 @@ button {
   font-weight: 800;
   cursor: pointer;
   transition: 0.2s;
+  font-family: 'Manrope', Arial, sans-serif;
 }
 
 button:hover {
@@ -345,15 +412,17 @@ button:hover {
 }
 
 .result-wrap {
-  margin: 50px auto 0;
-  padding: 34px;
-  border-radius: 32px;
+  margin: 60px auto 0;
+  padding: 26px;
+  border-radius: 28px;
   background: rgba(255, 255, 255, 0.10);
   backdrop-filter: blur(25px);
   border: 1px solid rgba(255, 255, 255, .15);
   box-shadow: 0 30px 100px rgba(0, 0, 0, 0.32);
   color: white;
-  width: 90%;
+  width: min(100%, 1180px);
+  font-family: 'Manrope', Arial, sans-serif;
+  overflow: hidden;
 }
 
 .route-header {
@@ -494,8 +563,9 @@ button:hover {
   color: white;
   margin: 0;
   line-height: 1;
-  letter-spacing: -1px;
+  letter-spacing: -3px;
   text-shadow: 0 5px 25px rgba(0, 0, 0, 0.45);
+  font-family: 'Manrope', Arial, sans-serif;
 }
 
 .hero-subtitle {
@@ -700,9 +770,51 @@ button:hover {
   background-size: cover;
   background-position: center;
   margin-bottom: 28px;
+  transition: background-image .4s ease, opacity .4s ease;
+}
+
+.route-header,
+.route-header-image {
+  width: 100%;
+  min-height: 240px;
+  border-radius: 24px;
+  background-size: cover;
+  background-position: center;
 }
 
 .route-header.route-header-image {
   align-items: flex-end;
+}
+
+.planner-card h2,
+.route-header h2,
+.hero-question {
+  font-family: 'Manrope', Arial, sans-serif;
+  font-weight: 800;
+}
+
+.route-gallery-dots {
+  display: flex;
+  gap: 8px;
+  margin: -16px 0 28px;
+  position: relative;
+  z-index: 20;
+}
+
+.gallery-line {
+  flex: 1;
+  height: 5px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255,255,255,.22);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.gallery-line.active {
+  background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+  box-shadow: 0 0 18px rgba(56,189,248,.45);
 }
 </style>

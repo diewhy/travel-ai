@@ -266,7 +266,7 @@ h1 {
 }
 
 .planner-card {
-  width: 700px;
+  width: 640px;
   margin: 34px auto 0;
   padding: 30px;
   border-radius: 30px;
@@ -325,8 +325,8 @@ button:hover {
 }
 
 .result-wrap {
-  max-width: 1200px;
-  margin: 70px auto 0;
+  max-width: 1000px;
+  margin: 50px auto 0;
   padding: 34px;
   border-radius: 32px;
   background: rgba(255, 255, 255, 0.10);
@@ -334,7 +334,7 @@ button:hover {
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 30px 100px rgba(0, 0, 0, 0.32);
   color: white;
-  width: 100%;
+  width: 90%;
 }
 
 .route-header {
@@ -433,9 +433,10 @@ button:hover {
 .center-hero {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   text-align: center;
-  min-height: calc(100vh - 120px);
+  min-height: auto;
+  padding-top: 40px;
 }
 
 .hero-center {

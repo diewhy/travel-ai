@@ -12,6 +12,11 @@ const formattedResult = computed (() => {
   .replace (/\*\*(.*?)\*\*/g, '<h3>$1</h3>')
   .replace (/\n/g, '<br>')
 })
+const showPlanner = ref(false)
+function selectDestination(name) {
+  place.value = name
+  showPlanner.value = true
+}
 
 async function generateRoute() {
   result.value = 'Генерируем маршрут, подождите 10-20 секунд...'
@@ -56,6 +61,8 @@ async function generateRoute() {
   
     <h1 class="hero-title">Открой Россию</h1>
     <p class="hero-subtitle">Путешествия начинаются здесь</p>
+    <Transition name="fade">
+      <div v-if="!showPlanner">
     <div class="stats">
       <div><strong>89</strong><span>регионов</span></div>
       <div><strong>500+</strong><span>маршрутов</span></div>
@@ -69,40 +76,43 @@ async function generateRoute() {
     </h2>
 
     <div class="destinations">
-  <div class="destination-card altai" @click="place = 'Алтай'">
+  <div class="destination-card altai" @click="selectDestination('Алтай')">
     <span>🏔</span>
     <strong>Алтай</strong>
   </div>
 
-  <div class="destination-card baikal" @click="place = 'Байкал'">
+  <div class="destination-card baikal" @click="selectDestination('Байкал')">
     <span>🌊</span>
     <strong>Байкал</strong>
   </div>
 
-  <div class="destination-card karelia" @click="place = 'Карелия'">
+  <div class="destination-card karelia" @click="selectDestination('Карелия')">
     <span>🌲</span>
     <strong>Карелия</strong>
   </div>
 
-  <div class="destination-card kamchatka" @click="place = 'Камчатка'">
+  <div class="destination-card kamchatka" @click="selectDestination('Камчатка')">
     <span>🌋</span>
     <strong>Камчатка</strong>
   </div>
 
-  <div class="destination-card dagestan" @click="place = 'Дагестан'">
+  <div class="destination-card dagestan" @click="selectDestination('Дагестан')">
     <span>⛰</span>
     <strong>Дагестан</strong>
   </div>
 
-  <div class="destination-card sochi" @click="place = 'Сочи'">
+  <div class="destination-card sochi" @click="selectDestination('Сочи')">
     <span>🌴</span>
     <strong>Сочи</strong>
   </div>
 </div>
+</div>
+</Transition>
 
-    <section class="planner-card">
+    <transition name="slide-up">
+      <section v-if="showPlanner" class="planner-card">
+        <button class="close-btn" @click="showPlanner = false">×</button>
       <h2>Собрать маршрут</h2>
-
       <input v-model="place" placeholder="Куда хотите поехать?" />
       <input v-model="days" placeholder="Сколько дней?" />
       <input v-model="budget" placeholder="Бюджет, ₽" />
@@ -119,7 +129,9 @@ async function generateRoute() {
       <button @click="generateRoute">
         Сгенерировать маршрут
       </button>
+      
     </section>
+    </transition>
   </section>
 </main>
 
@@ -270,6 +282,7 @@ h1 {
   color: white;
   text-align: left;
   max-width: 760px;
+  position: relative;
 }
 
 .planner-card h2 {
@@ -605,5 +618,50 @@ button:hover {
   .destination-card {
     height: 95px;
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: .4s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-up-enter-active {
+  transition: .5s ease;
+}
+
+.slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+.close-btn,
+.back-btn {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  margin: 0;
+
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.12);
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: none;
 }
 </style>

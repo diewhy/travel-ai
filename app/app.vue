@@ -1,5 +1,7 @@
 vue
 <script setup> 
+import {nextTick} from 'vue'
+
 const place = ref('')
 const days = ref('')
 const budget = ref ('')
@@ -31,6 +33,14 @@ async function generateRoute() {
     })
 
     result.value = response.route
+
+    await nextTick ()
+
+    document
+      .querySelector ('.result-wrap')
+      ?.scrollIntoView ({
+        behavior: 'smooth'
+      })
   } catch (error) {
     result.value = 'Ошибка:' + (error?.data?.message || error?.message || 'неизвестная ошибка')
   }
@@ -142,8 +152,13 @@ body {
   margin: 0;
   font-family: Arial, sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.18), transparent 30%),
-    linear-gradient(135deg, #071a3a 0%, #0b2f5b 45%, #9b1c31 100%);
+    linear-gradient(rgba(4, 15, 35, 0.72), rgba(4, 15, 35, 0.82)
+    ),
+    url('/fon.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;  
   min-height: 100vh;
 }
 
@@ -156,33 +171,11 @@ body {
   isolation: isolate;
 }
 
-.page ::before {
+.page::before {
   content: '';
   position: fixed;
-  width: 500px;
-  height: 500px;
-  border-radius: 50%;
-  background: #1d7cf2;
-  filter: blur(180px);
-  opacity: .25;
-  top: -150px;
-  left: -150px;
-  pointer-events: none;
-  z-index: -1;
-}
-
-.page ::after {
-  content: '';
-  position: fixed;
-  width: 500px;
-  height: 500px;
-  border-radius: 50%;
-  background: #ff2d55;
-  filter: blur(180px);
-  opacity: .20;
-  top: -200;
-  left: -150px;
-  pointer-events: none;
+  inset: 0;
+  background: rgba(5,15,35,0.55);
   z-index: -1;
 }
 
@@ -266,17 +259,17 @@ h1 {
 }
 
 .planner-card {
-  width: 640px;
+  width: 100%;
   margin: 34px auto 0;
   padding: 30px;
   border-radius: 30px;
-  background: rgba(255,255,255,.14);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(255,255,255,.22);
-  box-shadow: 0 28px 90px rgba(0,0,0,.32);
+  background: rgba(255,255,255,.12);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
   color: white;
   text-align: left;
-  max-width: 90vw;
+  max-width: 760px;
 }
 
 .planner-card h2 {
@@ -330,8 +323,8 @@ button:hover {
   padding: 34px;
   border-radius: 32px;
   background: rgba(255, 255, 255, 0.10);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, .15);
   box-shadow: 0 30px 100px rgba(0, 0, 0, 0.32);
   color: white;
   width: 90%;
@@ -446,6 +439,18 @@ button:hover {
   flex-direction: column;
   align-items: center;
   text-align: center;
+  animation: fadeUp .8s ease;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .main-logo {
@@ -464,7 +469,7 @@ button:hover {
   margin: 0;
   line-height: 1;
   letter-spacing: -1px;
-  text-shadow: 0 14px 50px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 5px 25px rgba(0, 0, 0, 0.45);
 }
 
 .hero-subtitle {
@@ -474,6 +479,7 @@ button:hover {
   font-weight: 600;
   margin-bottom: 40px;
   margin-top: 12px;
+  text-shadow: 0 3px 15px rgba(0, 0, 0, 0.35);
 }
 
 .popular {

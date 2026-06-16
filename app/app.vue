@@ -148,7 +148,9 @@ async function generateRoute() {
 </main>
 
     <section v-if="result" class="result-wrap">
-  <div class="route-header">
+  <div class="route-header route-header-image"
+    :style="{backgroundImage: `linear-gradient(rgba(5,15,35,.45), rgba(5,15,35,.85)), url(${currentDestinationImage})`}"
+    >
     <div>
       <p class="route-label">Ваш маршрут готов</p>
       <h2>Маршрут по направлению: {{ place || 'Россия' }}</h2>
@@ -689,5 +691,18 @@ button:hover {
   height: 100%;
   object-fit:cover;
   object-position: center;
+}
+
+.route-header-image {
+  min-height: 260px;
+  padding: 28px;
+  border-radius: 26px;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 28px;
+}
+
+.route-header.route-header-image {
+  align-items: flex-end;
 }
 </style>

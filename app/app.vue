@@ -177,72 +177,65 @@ function deleteSavedRoute(index) {
   )
 }
 
-async function downloadPdf() {
-  const html2pdf = (await import('html2pdf.js')).default
+function downloadPdf() {
+  const printWindow = window.open('', '_blank')
 
-  const pdfBlock = document.createElement('div')
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>${place.value}-маршрут</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            color: #111827;
+            line-height: 1.6;
+          }
 
-  pdfBlock.innerHTML = `
-    <div style="
-      width: 760px;
-      padding: 40px;
-      background: white;
-      color: #111827;
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-    ">
-      <h1 style="color:#0b2f5b; margin-bottom: 10px;">
-        Открой Россию
-      </h1>
+          h1 {
+            color: #0b2f5b;
+            font-size: 32px;
+          }
 
-      <h2 style="color:#0284c7;">
-        Маршрут по направлению: ${place.value}
-      </h2>
+          h2 {
+            color: #0284c7;
+            font-size: 24px;
+          }
 
-      <p style="font-weight:700; margin-bottom: 30px;">
-        ${days.value} дней · ${budget.value} ₽ · ${travelType.value}
-      </p>
+          h3 {
+            color: #2563eb;
+            margin-top: 28px;
+          }
 
-      <div>
-        ${formattedResult.value}
-      </div>
-    </div>
-  `
+          .meta {
+            font-weight: 700;
+            margin-bottom: 30px;
+          }
+        </style>
+      </head>
 
-  pdfBlock.style.position = 'fixed'
-  pdfBlock.style.left = '0'
-  pdfBlock.style.top = '0'
-  pdfBlock.style.zIndex = '99999'
-  pdfBlock.style.background = 'white'
+      <body>
+        <h1>Открой Россию</h1>
 
-  document.body.appendChild(pdfBlock)
+        <h2>Маршрут по направлению: ${place.value}</h2>
 
-  const options = {
-    margin: 10,
-    filename: `${place.value || 'route'}-маршрут.pdf`,
-    image: {
-      type: 'jpeg',
-      quality: 0.98
-    },
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff'
-    },
-    jsPDF: {
-      unit: 'mm',
-      format: 'a4',
-      orientation: 'portrait'
-    }
+        <div class="meta">
+          ${days.value} дней · ${budget.value} ₽ · ${travelType.value}
+        </div>
+
+        <div>
+          ${formattedResult.value}
+        </div>
+      </body>
+    </html>
+  `)
+
+  printWindow.document.close()
+
+  printWindow.onload = () => {
+    printWindow.print()
   }
 
-  await html2pdf()
-    .set(options)
-    .from(pdfBlock)
-    .save()
-
-  document.body.removeChild(pdfBlock)
-}
 </script>
 
 <template>

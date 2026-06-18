@@ -922,18 +922,19 @@ button:hover {
 
 .saved-route-card {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+
+  gap: 16px;
 
   padding: 16px 20px;
   margin-bottom: 12px;
 
   border-radius: 16px;
 
-  background: rgba(255,255,255,.12);
+  background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.15);
 
-  transition: .25s;
   cursor: pointer;
 }
 
@@ -950,12 +951,20 @@ button:hover {
 }
 
 .delete-route-btn {
-  width: 34px;
-  height: 34px;
+  flex-shrink: 0;
+
+  width: 32px;
+  height: 32px;
+
+  border: none;
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,.2);
-  background: rgba(255,255,255,.12);
+
+  background: rgba(255,255,255,.15);
   color: white;
+
+  font-size: 18px;
+  font-weight: 700;
+
   cursor: pointer;
 }
 </style>

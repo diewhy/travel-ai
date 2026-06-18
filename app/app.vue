@@ -167,6 +167,15 @@ function openSavedRoute(route) {
   })
 }
 
+function deleteSavedRoute(index) {
+  savedRoutes.value.splice(index, 1)
+
+  localStorage.setItem(
+    'saved-routes' ,
+    JSON.stringify(savedRoutes.value)
+  )
+}
+
 </script>
 
 <template>
@@ -287,7 +296,7 @@ function openSavedRoute(route) {
   <h2>Мои маршруты</h2>
 
   <div
-    v-for="route in savedRoutes"
+    v-for="(route, index) in savedRoutes"
     :key="route.date + route.place"
     class="saved-route-card"
     @click="openSavedRoute(route)"
@@ -301,6 +310,14 @@ function openSavedRoute(route) {
   <span>
     {{ route.budget }} ₽
   </span>
+
+  <button
+    class="delete-route-btn"
+    @click.stop="deleteSavedRoute(index)"
+  >
+    ×
+  </button>
+  
   </div>
 </section>
   </div>
@@ -930,5 +947,15 @@ button:hover {
   padding: 8px 12px;
   border-radius: 999px;
   background: rgba(255,255,255,.12);
+}
+
+.delete-route-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.12);
+  color: white;
+  cursor: pointer;
 }
 </style>

@@ -1,7 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-
-const mapContainer = ref(null)
+import { onMounted, watch } from 'vue'
 
 const props = defineProps({
   place: {
@@ -11,7 +9,6 @@ const props = defineProps({
 })
 
 const config = useRuntimeConfig()
-console.log('YANDEX KEY:', config.public.yandexMapsKey)
 
 const centers = {
   'Алтай': [51.9581, 85.9603],
@@ -25,8 +22,8 @@ const centers = {
 let map = null
 let placemark = null
 
-function loadYandexMaps() {
-  return new Promise((resolve) => {
+function loadScript() {
+  return new Promise((resolve, reject) => {
     if (window.ymaps) {
       resolve(window.ymaps)
       return
@@ -35,12 +32,14 @@ function loadYandexMaps() {
     const script = document.createElement('script')
     script.src = `https://api-maps.yandex.ru/2.1/?apikey=${config.public.yandexMapsKey}&lang=ru_RU`
     script.onload = () => resolve(window.ymaps)
+    script.onerror = reject
+
     document.head.appendChild(script)
   })
 }
 
 async function initMap() {
-  const ymaps = await loadYandexMaps()
+  const ymaps = await loadScript()
 
   ymaps.ready(() => {
     const center = centers[props.place] || centers['Алтай']
@@ -64,31 +63,25 @@ function updateMap() {
 
   const center = centers[props.place] || centers['Алтай']
 
-  map.setCenter(center, 7, {
-    duration: 600
-  })
-
+  map.setCenter(center, 7, { duration: 600 })
   placemark.geometry.setCoordinates(center)
   placemark.properties.set('balloonContent', props.place)
 }
 
 onMounted(() => {
-  initMap()
+  setTimeout(() => {
+    initMap()
+  }, 300)
 })
 
-watch(
-  () => props.place,
-  () => {
-    updateMap()
-  }
-)
+watch(() => props.place, updateMap)
 </script>
 
 <template>
-  <div class="map-card">
+  <section class="map-card">
     <h2>Карта путешествия</h2>
-    <div ref="mapContainer" class="yandex-map"></div>
-  </div>
+    <div id="yandex-map" class="yandex-map"></div>
+  </section>
 </template>
 
 <style scoped>
@@ -96,12 +89,10 @@ watch(
   max-width: 1180px;
   margin: 40px auto;
   padding: 24px;
-
   border-radius: 28px;
   background: rgba(255,255,255,.1);
   border: 1px solid rgba(255,255,255,.18);
   backdrop-filter: blur(16px);
-
   color: white;
 }
 
@@ -112,7 +103,9 @@ watch(
 .yandex-map {
   width: 100%;
   height: 420px;
+  min-height: 420px;
   border-radius: 22px;
   overflow: hidden;
+  background: rgba(255,255,255,.18);
 }
 </style>

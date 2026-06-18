@@ -1,6 +1,6 @@
 vue
 <script setup> 
-import {nextTick, onMounted, onBeforeMount} from 'vue'
+import {ref, computed, nextTick, onMounted, onBeforeUnmount} from 'vue'
 
 const place = ref('')
 const days = ref('')
@@ -58,6 +58,7 @@ function stopGalleryAutoplay() {
 
 onMounted(() => {
   startGalleryAutoplay()
+  loadSavedRoutes()
 })
 
 onBeforeUnmount(() => {
@@ -104,6 +105,8 @@ async function generateRoute() {
 
     result.value = response.route
 
+    saveCurrentRoute()
+
     await nextTick ()
 
     document
@@ -114,6 +117,35 @@ async function generateRoute() {
   } catch (error) {
     result.value = 'Ошибка:' + (error?.data?.message || error?.message || 'неизвестная ошибка')
   }
+}
+
+const savedRoutes = ref([])
+
+function loadSavedRoutes() {
+  const saved = localStorage.getItem('saved-routes')
+
+  if (saved) {
+    savedRoutes.value = JSON.parse(saved)
+  }
+}
+
+function saveCurrentRoute() {
+  if (!result.value) return
+
+  const route = {
+    place: place.value,
+    days: days.value,
+    budget: budget.value,
+    travelType: travelType.value,
+    route: route.value,
+    date: new Date().toLocaleDateString()
+  }
+
+  savedRoutes.value.unshift(route)
+  localStorage.setItem(
+    'saved-routes',
+    JSON.stringify(savedRoutes.value)
+  )
 }
 
 </script>
@@ -227,6 +259,29 @@ async function generateRoute() {
   </div>
 
   <div class="result" v-html="formattedResult"></div>
+</section>
+
+<section
+  v-if="savedRoutes.length"
+  class="saves-routes"  
+>
+  <h2>Мои маршруты</h2>
+
+  <div
+    v-for="route in savedRoutes"
+    :key="route.date + route.place"
+    class="saved-route-card"
+  >
+
+  <strong>{{ route.place }}</strong>
+  <span>
+    {{ route.days }} дн.
+  </span>
+
+  <span>
+    {{ route.budget }} ₽
+  </span>
+  </div>
 </section>
   </div>
 </template>
@@ -816,5 +871,29 @@ button:hover {
 .gallery-line.active {
   background: linear-gradient(90deg, #38bdf8, #0ea5e9);
   box-shadow: 0 0 18px rgba(56,189,248,.45);
+}
+
+.saved-routes {
+  max-width: 1180px;
+  margin: 40px auto;
+}
+
+.saved-routes h2 {
+  margin-bottom: 20px;
+}
+
+.saved-route-card {
+  background: rgba(255,255,255,.08);
+  backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(255,255,255,.15);
+
+  padding: 16px;
+  border-radius: 18px;
+
+  display: flex;
+  justify-content: space-between;
+
+  margin-bottom: 12px;
 }
 </style>

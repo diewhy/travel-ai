@@ -194,7 +194,9 @@ async function downloadPdf() {
     html2canvas: {
       scale: 2,
       useCORS: true,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      scrollX: 0,
+      scrollY: 0
     },
     jsPDF: {
       unit: 'mm',
@@ -1037,18 +1039,17 @@ button:hover {
 }
 
 .pdf-export {
-  position: fixed;
-  left: -9999px;
+  position: absolute;
+  left: 0;
   top: 0;
-
   width: 800px;
   padding: 40px;
-
   background: white;
   color: #111827;
-
   font-family: 'Manrope', Arial, sans-serif;
   line-height: 1.6;
+  z-index: -999;
+  opacity: 0;
 }
 
 .pdf-export h1 {

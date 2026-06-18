@@ -1048,8 +1048,6 @@ button:hover {
   color: #111827;
   font-family: 'Manrope', Arial, sans-serif;
   line-height: 1.6;
-  z-index: -999;
-  opacity: 0;
 }
 
 .pdf-export h1 {

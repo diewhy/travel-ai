@@ -1,7 +1,7 @@
 vue
 <script setup> 
 import {ref, computed, nextTick, onMounted, onBeforeUnmount} from 'vue'
-import YandexMap from '/components/YandexMap.vue'
+import YandexMap from '~/components/YandexMap.vue'
 
 const place = ref('')
 const days = ref('')
@@ -355,6 +355,11 @@ function downloadPdf() {
   </button>
 </section>
 
+<YandexMap
+  v-if="result"
+  :place="place"
+> </YandexMap>
+
 <section
   v-if="savedRoutes.length"
   class="saves-routes"  
@@ -386,12 +391,6 @@ function downloadPdf() {
   
   </div>
 </section>
-
-<YandexMap
-  v-if="result"
-  :place="place"
-> </YandexMap>
-
   </div>
 </template>
 

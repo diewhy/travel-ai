@@ -884,20 +884,25 @@ button:hover {
 }
 
 .saved-route-card {
-  background: rgba(255,255,255,.12);
-  border: 1px solid rgba(255,255,255,.18);
-  backdrop-filter: blur(14px);
-  border-radius: 20px;
-  padding: 18px 22px;
-  margin-bottom: 14px;
-
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 18px;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
 
-  color: white;
-  font-weight: 700;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+
+  border-radius: 16px;
+
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.15);
+
+  transition: .25s;
+  cursor: pointer;
+}
+
+.saved-route-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,.18);
 }
 
 .saved-route-card span {

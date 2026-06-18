@@ -235,7 +235,7 @@ function downloadPdf() {
   printWindow.onload = () => {
     printWindow.print()
   }
-
+}
 </script>
 
 <template>

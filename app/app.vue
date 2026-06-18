@@ -180,7 +180,7 @@ function deleteSavedRoute(index) {
 async function downloadPdf() {
   const html2pdf = (await import('html2pdf.js')).default
 
-  const element = document.querySelector('.result-wrap')
+  const element = document.querySelector('.pdf-export')
 
   if (!element) return
 
@@ -194,7 +194,7 @@ async function downloadPdf() {
     html2canvas: {
       scale: 2,
       useCORS: true,
-      backgroundColor: null
+      backgroundColor: '#ffffff'
     },
     jsPDF: {
       unit: 'mm',
@@ -327,6 +327,18 @@ async function downloadPdf() {
     📄 Скачать PDF
   </button>
 </section>
+
+<div v-if="result" class="pdf-export">
+  <h1>Открой Россию</h1>
+
+  <h2>Маршрут по направлению: {{ place }}</h2>
+
+  <p>
+    {{ days }} дней • {{ budget }} ₽ • {{ travelType }}
+  </p>
+
+  <div v-html="formattedResult"></div>
+</div>
 
 <section
   v-if="savedRoutes.length"
@@ -1022,5 +1034,36 @@ button:hover {
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
+}
+
+.pdf-export {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+
+  width: 800px;
+  padding: 40px;
+
+  background: white;
+  color: #111827;
+
+  font-family: 'Manrope', Arial, sans-serif;
+  line-height: 1.6;
+}
+
+.pdf-export h1 {
+  color: #0b2f5b;
+  font-size: 34px;
+  margin-bottom: 12px;
+}
+
+.pdf-export h2 {
+  color: #0ea5e9;
+  font-size: 24px;
+}
+
+.pdf-export h3 {
+  color: #2563eb;
+  margin-top: 24px;
 }
 </style>

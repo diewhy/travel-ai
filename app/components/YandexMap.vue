@@ -43,12 +43,17 @@ function loadScript() {
 }
 
 async function initMap() {
+  if (map) return
+
+  const container = document.getElementById('yandex-map')
+  if (!container) return
+
   const ymaps = await loadScript()
 
   ymaps.ready(() => {
     const center = centers[props.place] || centers['Алтай']
 
-    map = new ymaps.Map('yandex-map', {
+    map = new ymaps.Map(container, {
       center,
       zoom: 7,
       controls: ['zoomControl', 'fullscreenControl']
@@ -59,8 +64,6 @@ async function initMap() {
     }, 500)
 
     drawPoints()
-
-    map.geoObjects.add(placemark)
   })
 }
 
@@ -105,7 +108,7 @@ function updateMap() {
 onMounted(() => {
   setTimeout(() => {
     initMap()
-  }, 300)
+  }, 500)
 })
 
 watch(

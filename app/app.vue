@@ -6,6 +6,7 @@ const place = ref('')
 const days = ref('')
 const budget = ref ('')
 const travelType = ref('Активный')
+const savedRoutes = ref([])
 const result = ref ('')
 const formattedResult = computed (() => {
   return result.value
@@ -119,8 +120,6 @@ async function generateRoute() {
   }
 }
 
-const savedRoutes = ref([])
-
 function loadSavedRoutes() {
   const saved = localStorage.getItem('saved-routes')
 
@@ -132,16 +131,17 @@ function loadSavedRoutes() {
 function saveCurrentRoute() {
   if (!result.value) return
 
-  const route = {
+  const newRoute = {
     place: place.value,
     days: days.value,
     budget: budget.value,
     travelType: travelType.value,
-    route: route.value,
+    routeText: result.value,
     date: new Date().toLocaleDateString()
   }
 
-  savedRoutes.value.unshift(route)
+  savedRoutes.value.unshift(newRoute)
+
   localStorage.setItem(
     'saved-routes',
     JSON.stringify(savedRoutes.value)

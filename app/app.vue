@@ -148,6 +148,25 @@ function saveCurrentRoute() {
   )
 }
 
+function openSavedRoute(route) {
+  place.value = route.place
+  days.value = route.days
+  budget.value = route.budget
+  travelType.value = route.travelType
+
+  result.value = route.routeText
+  showPlanner.value = true
+  activeImageIndex.value = 0
+
+  nextTick(() => {
+    document
+      .querySelector('.result-wrap')
+      ?.scrollIntoView({
+        behavior: 'smooth'
+      })
+  })
+}
+
 </script>
 
 <template>
@@ -271,6 +290,7 @@ function saveCurrentRoute() {
     v-for="route in savedRoutes"
     :key="route.date + route.place"
     class="saved-route-card"
+    @click="openSavedRoute(route)"
   >
 
   <strong>{{ route.place }}</strong>

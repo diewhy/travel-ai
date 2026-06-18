@@ -180,9 +180,42 @@ function deleteSavedRoute(index) {
 async function downloadPdf() {
   const html2pdf = (await import('html2pdf.js')).default
 
-  const element = document.querySelector('.pdf-export')
+  const pdfBlock = document.createElement('div')
 
-  if (!element) return
+  pdfBlock.innerHTML = `
+    <div style="
+      width: 760px;
+      padding: 40px;
+      background: white;
+      color: #111827;
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+    ">
+      <h1 style="color:#0b2f5b; margin-bottom: 10px;">
+        Открой Россию
+      </h1>
+
+      <h2 style="color:#0284c7;">
+        Маршрут по направлению: ${place.value}
+      </h2>
+
+      <p style="font-weight:700; margin-bottom: 30px;">
+        ${days.value} дней · ${budget.value} ₽ · ${travelType.value}
+      </p>
+
+      <div>
+        ${formattedResult.value}
+      </div>
+    </div>
+  `
+
+  pdfBlock.style.position = 'fixed'
+  pdfBlock.style.left = '0'
+  pdfBlock.style.top = '0'
+  pdfBlock.style.zIndex = '99999'
+  pdfBlock.style.background = 'white'
+
+  document.body.appendChild(pdfBlock)
 
   const options = {
     margin: 10,
@@ -194,9 +227,7 @@ async function downloadPdf() {
     html2canvas: {
       scale: 2,
       useCORS: true,
-      backgroundColor: '#ffffff',
-      scrollX: 0,
-      scrollY: 0
+      backgroundColor: '#ffffff'
     },
     jsPDF: {
       unit: 'mm',
@@ -205,12 +236,13 @@ async function downloadPdf() {
     }
   }
 
-  html2pdf()
+  await html2pdf()
     .set(options)
-    .from(element)
+    .from(pdfBlock)
     .save()
-}
 
+  document.body.removeChild(pdfBlock)
+}
 </script>
 
 <template>
@@ -329,18 +361,6 @@ async function downloadPdf() {
     📄 Скачать PDF
   </button>
 </section>
-
-<div v-if="result" class="pdf-export">
-  <h1>Открой Россию</h1>
-
-  <h2>Маршрут по направлению: {{ place }}</h2>
-
-  <p>
-    {{ days }} дней • {{ budget }} ₽ • {{ travelType }}
-  </p>
-
-  <div v-html="formattedResult"></div>
-</div>
 
 <section
   v-if="savedRoutes.length"
@@ -1038,31 +1058,4 @@ button:hover {
   cursor: pointer;
 }
 
-.pdf-export {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 800px;
-  padding: 40px;
-  background: white;
-  color: #111827;
-  font-family: 'Manrope', Arial, sans-serif;
-  line-height: 1.6;
-}
-
-.pdf-export h1 {
-  color: #0b2f5b;
-  font-size: 34px;
-  margin-bottom: 12px;
-}
-
-.pdf-export h2 {
-  color: #0ea5e9;
-  font-size: 24px;
-}
-
-.pdf-export h3 {
-  color: #2563eb;
-  margin-top: 24px;
-}
 </style>

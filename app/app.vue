@@ -311,12 +311,12 @@ function deleteSavedRoute(index) {
     {{ route.budget }} ₽
   </span>
 
-  <button
+  <span
     class="delete-route-btn"
     @click.stop="deleteSavedRoute(index)"
   >
     ×
-  </button>
+</span>
   
   </div>
 </section>
@@ -951,20 +951,20 @@ button:hover {
 }
 
 .delete-route-btn {
-  flex-shrink: 0;
-
+  flex: 0 0 32px;
   width: 32px;
   height: 32px;
-
-  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
   border-radius: 50%;
-
   background: rgba(255,255,255,.15);
   color: white;
-
   font-size: 18px;
   font-weight: 700;
-
+  line-height: 1;
   cursor: pointer;
 }
 </style>

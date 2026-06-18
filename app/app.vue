@@ -1,6 +1,7 @@
 vue
 <script setup> 
 import {ref, computed, nextTick, onMounted, onBeforeUnmount} from 'vue'
+import { jsPDF } from 'jspdf'
 
 const place = ref('')
 const days = ref('')
@@ -176,6 +177,23 @@ function deleteSavedRoute(index) {
   )
 }
 
+function downloadPdf() {
+  const doc = new jsPDF()
+
+  doc.setFontSize(22)
+  doc.text('Открой Россию', 20, 20)
+
+  doc.setFontSize(16)
+  doc.text(`Маршрут: ${place.value}`, 20, 40)
+
+  const lines = doc.splitTextToSize(result.value, 170)
+
+  doc.setFontSize(12)
+  doc.text(lines, 20, 60)
+
+  doc.save(`${place.value}-route.pdf`)
+}
+
 </script>
 
 <template>
@@ -287,6 +305,12 @@ function deleteSavedRoute(index) {
   </div>
 
   <div class="result" v-html="formattedResult"></div>
+  <button
+    class="pdf-btn"
+    @click="downloadPdf"
+  >
+    📄 Скачать PDF
+  </button>
 </section>
 
 <section
@@ -965,6 +989,23 @@ button:hover {
   font-size: 18px;
   font-weight: 700;
   line-height: 1;
+  cursor: pointer;
+}
+
+.pdf-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(
+    90deg,
+    #2563eb,
+    #06b6d4
+  );
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
 }
 </style>

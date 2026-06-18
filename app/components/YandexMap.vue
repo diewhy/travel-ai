@@ -50,6 +50,10 @@ async function initMap() {
       controls: ['zoomControl', 'fullscreenControl']
     })
 
+    setTimeout(() => {
+      map.container.fitToViewport()
+    }, 500)
+
     placemark = new ymaps.Placemark(center, {
       balloonContent: props.place
     })
@@ -101,9 +105,10 @@ watch(() => props.place, updateMap)
 }
 
 .yandex-map {
-  width: 100%;
-  height: 420px;
-  min-height: 420px;
+  width: 100% !important;
+  height: 420px !important;
+  min-height: 420px !important;
+  display: block !important;
   border-radius: 22px;
   overflow: hidden;
   background: rgba(255,255,255,.18);

@@ -82,9 +82,16 @@ watch(() => props.place, updateMap)
 </script>
 
 <template>
-  <section class="map-card">
+  <section
+  class="map-card"
+  style="max-width:1180px;margin:40px auto;padding:24px;min-height:520px;"
+    >
     <h2>Карта путешествия</h2>
-    <div id="yandex-map" class="yandex-map"></div>
+    <div
+  id="yandex-map"
+  style="width:100%;height:420px;min-height:420px;display:block;border-radius:22px;overflow:hidden;background:rgba(255,255,255,.18);"
+        >
+    </div>
   </section>
 </template>
 
@@ -98,6 +105,8 @@ watch(() => props.place, updateMap)
   border: 1px solid rgba(255,255,255,.18);
   backdrop-filter: blur(16px);
   color: white;
+  display: block;
+  min-height: 520px;
 }
 
 .map-card h2 {

@@ -9,6 +9,7 @@ const budget = ref ('')
 const travelType = ref('Активный')
 const savedRoutes = ref([])
 const result = ref ('')
+const mapPoints = ref([])
 const formattedResult = computed (() => {
   return result.value
   .replace (/\*\*(.*?)\*\*/g, '<h3>$1</h3>')
@@ -106,6 +107,7 @@ async function generateRoute() {
     })
 
     result.value = response.route
+    mapPoints.value = response.mapPoints || []
 
     saveCurrentRoute()
 
@@ -158,6 +160,7 @@ function openSavedRoute(route) {
   result.value = route.routeText
   showPlanner.value = true
   activeImageIndex.value = 0
+  mapPoints.value = route.mapPoints || []
 
   nextTick(() => {
     document
@@ -358,6 +361,7 @@ function downloadPdf() {
 <YandexMap
   v-if="result"
   :place="place"
+  :points="mapPoints"
 > </YandexMap>
 
 <section

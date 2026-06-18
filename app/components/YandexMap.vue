@@ -5,6 +5,10 @@ const props = defineProps({
   place: {
     type: String,
     default: 'Алтай'
+  },
+  points: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -54,16 +58,42 @@ async function initMap() {
       map.container.fitToViewport()
     }, 500)
 
-    placemark = new ymaps.Placemark(center, {
-      balloonContent: props.place
-    })
+    drawPoints()
 
     map.geoObjects.add(placemark)
   })
 }
 
+function drawPoints() {
+  if (!map || !window.ymaps) return
+
+  map.geoObjects.removeAll()
+
+  const points = props.points?.length
+    ? props.points
+    : [props.place]
+
+  points.forEach((point) => {
+    window.ymaps.geocode(point).then((res) => {
+      const firstGeoObject = res.geoObjects.get(0)
+
+      if (!firstGeoObject) return
+
+      const coords = firstGeoObject.geometry.getCoordinates()
+
+      const placemark = new window.ymaps.Placemark(coords, {
+        balloonContent: point
+      })
+
+      map.geoObjects.add(placemark)
+    })
+  })
+}
+
 function updateMap() {
   if (!map || !placemark) return
+
+  drawPoints()
 
   const center = centers[props.place] || centers['Алтай']
 
@@ -78,7 +108,13 @@ onMounted(() => {
   }, 300)
 })
 
-watch(() => props.place, updateMap)
+watch(
+  () => [props.place, props.points],
+  () => {
+    updateMap()
+  },
+  { deep: true }
+)
 </script>
 
 <template>

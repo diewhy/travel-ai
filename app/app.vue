@@ -875,25 +875,35 @@ button:hover {
 
 .saved-routes {
   max-width: 1180px;
-  margin: 40px auto;
+  margin: 50px auto;
 }
 
 .saved-routes h2 {
-  margin-bottom: 20px;
+  color: white;
+  margin-bottom: 18px;
 }
 
 .saved-route-card {
-  background: rgba(255,255,255,.08);
-  backdrop-filter: blur(12px);
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.18);
+  backdrop-filter: blur(14px);
+  border-radius: 20px;
+  padding: 18px 22px;
+  margin-bottom: 14px;
 
-  border: 1px solid rgba(255,255,255,.15);
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 18px;
+  align-items: center;
 
-  padding: 16px;
-  border-radius: 18px;
+  color: white;
+  font-weight: 700;
+}
 
-  display: flex;
-  justify-content: space-between;
-
-  margin-bottom: 12px;
+.saved-route-card span {
+  opacity: .85;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
 }
 </style>

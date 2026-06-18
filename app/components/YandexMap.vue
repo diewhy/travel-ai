@@ -1,5 +1,7 @@
 <script setup>
-import { onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+
+const mapContainer = ref(null)
 
 const props = defineProps({
   place: {
@@ -9,6 +11,7 @@ const props = defineProps({
 })
 
 const config = useRuntimeConfig()
+console.log('YANDEX KEY:', config.public.yandexMapsKey)
 
 const centers = {
   'Алтай': [51.9581, 85.9603],
@@ -84,7 +87,7 @@ watch(
 <template>
   <div class="map-card">
     <h2>Карта путешествия</h2>
-    <div id="yandex-map" class="yandex-map"></div>
+    <div ref="mapContainer" class="yandex-map"></div>
   </div>
 </template>
 

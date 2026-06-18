@@ -1,7 +1,7 @@
 vue
 <script setup> 
 import {ref, computed, nextTick, onMounted, onBeforeUnmount} from 'vue'
-import { jsPDF } from 'jspdf'
+
 
 const place = ref('')
 const days = ref('')
@@ -177,21 +177,36 @@ function deleteSavedRoute(index) {
   )
 }
 
-function downloadPdf() {
-  const doc = new jsPDF()
+async function downloadPdf() {
+  const html2pdf = (await import('html2pdf.js')).default
 
-  doc.setFontSize(22)
-  doc.text('Открой Россию', 20, 20)
+  const element = document.querySelector('.result-wrap')
 
-  doc.setFontSize(16)
-  doc.text(`Маршрут: ${place.value}`, 20, 40)
+  if (!element) return
 
-  const lines = doc.splitTextToSize(result.value, 170)
+  const options = {
+    margin: 10,
+    filename: `${place.value || 'route'}-маршрут.pdf`,
+    image: {
+      type: 'jpeg',
+      quality: 0.98
+    },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: null
+    },
+    jsPDF: {
+      unit: 'mm',
+      format: 'a4',
+      orientation: 'portrait'
+    }
+  }
 
-  doc.setFontSize(12)
-  doc.text(lines, 20, 60)
-
-  doc.save(`${place.value}-route.pdf`)
+  html2pdf()
+    .set(options)
+    .from(element)
+    .save()
 }
 
 </script>

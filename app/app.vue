@@ -1,7 +1,7 @@
 vue
 <script setup> 
 import {ref, computed, nextTick, onMounted, onBeforeUnmount} from 'vue'
-import YandexMap from '~/components/YandexMap.vue'
+import YandexMap from '/components/YandexMap.vue'
 
 const place = ref('')
 const days = ref('')

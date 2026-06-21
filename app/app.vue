@@ -16,6 +16,7 @@ const formattedResult = computed (() => {
   .replace (/\n/g, '<br>')
 })
 const showPlanner = ref(false)
+const routeMode = ref('travel')
 const destinationImages = {
   'Алтай' : '/places/altai.jpg',
   'Байкал' : '/places/baikal.jpg',
@@ -263,35 +264,85 @@ function downloadPdf() {
       Куда хотите отправиться?
     </h2>
 
-    <div class="destinations">
-  <div class="destination-card altai" @click="selectDestination('Алтай')">
-    <span>🏔</span>
-    <strong>Алтай</strong>
+    <div class="mode-switch">
+      <div
+        class="mode-btn"
+        :class="{ active: routeMode === 'travel' }"
+        @click="routeMode = 'travel'"
+      >
+        Туристические маршруты
+      </div>
+
+    <div
+      class="mode-btn"
+      :class="{ active: routeMode === 'history' }"
+      @click="routeMode = 'history'"
+    >
+      Города воинской славы
+    </div>
   </div>
 
-  <div class="destination-card baikal" @click="selectDestination('Байкал')">
-    <span>🌊</span>
-    <strong>Байкал</strong>
+    <div v-if="routeMode === 'travel'" class="destinations">
+      <div class="destination-card altai" @click="selectDestination('Алтай')">
+        <span>⛰️ </span>
+        <strong>Алтай</strong>
+      </div>
+
+      <div class="destination-card baikal" @click="selectDestination('Байкал')">
+        <span>🌊 </span>
+        <strong>Байкал</strong>
+      </div>
+
+      <div class="destination-card karelia" @click="selectDestination('Карелия')">
+        <span>🌲 </span>
+        <strong>Карелия</strong>
+      </div>
+
+      <div class="destination-card kamchatka" @click="selectDestination('Камчатка')">
+        <span>🌋 </span>
+        <strong>Камчатка</strong>
+      </div>
+
+      <div class="destination-card dagestan" @click="selectDestination('Дагестан')">
+        <span>⛰️ </span>
+        <strong>Дагестан</strong>
+      </div>
+
+      <div class="destination-card sochi" @click="selectDestination('Сочи')">
+        <span>🌴 </span>
+        <strong>Сочи</strong>
+      </div>
+</div>
+
+<div v-if="routeMode === 'history'" class="destinations">
+  <div class="destination-card altai" @click="selectDestination('Ржев')">
+    <span>🎖️ </span>
+    <strong>Ржев</strong>
   </div>
 
-  <div class="destination-card karelia" @click="selectDestination('Карелия')">
-    <span>🌲</span>
-    <strong>Карелия</strong>
+  <div class="destination-card baikal" @click="selectDestination('Волоколамск')">
+    <span>🛡️ </span>
+    <strong>Волоколамск</strong>
   </div>
 
-  <div class="destination-card kamchatka" @click="selectDestination('Камчатка')">
-    <span>🌋</span>
-    <strong>Камчатка</strong>
+  <div class="destination-card karelia" @click="selectDestination('Белгород')">
+    <span>⭐</span>
+    <strong>Белгород</strong>
   </div>
 
-  <div class="destination-card dagestan" @click="selectDestination('Дагестан')">
-    <span>⛰</span>
-    <strong>Дагестан</strong>
+  <div class="destination-card kamchatka" @click="selectDestination('Курск')">
+    <span>⚔️ </span>
+    <strong>Курск</strong>
   </div>
 
-  <div class="destination-card sochi" @click="selectDestination('Сочи')">
-    <span>🌴</span>
-    <strong>Сочи</strong>
+  <div class="destination-card dagestan" @click="selectDestination('Кронштадт')">
+    <span>🚢 </span>
+    <strong>Кронштадт</strong>
+  </div>
+
+  <div class="destination-card sochi" @click="selectDestination('Елец')">
+    <span>🏛️ </span>
+    <strong>Елец</strong>
   </div>
 </div>
 </div>
@@ -1060,4 +1111,32 @@ button:hover {
   cursor: pointer;
 }
 
+.mode-switch {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 24px 0;
+  position: relative;
+  z-index: 20;
+}
+
+.mode-btn {
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.12);
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mode-btn.active {
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
+}
+
+.destination-card {
+  padding: 16px 20px;
+  min-height: 70px;
+}
 </style>

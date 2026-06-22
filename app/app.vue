@@ -405,14 +405,13 @@ function downloadPdf() {
     </div>
   </div>
 
-  <div class="result" v-html="formattedResult"></div>
-    <div v-if="history" class="history-card">
+  <div v-if="history" class="history-card">
       <h3>📖  Историческая справка</h3>
       <p>{{ history }}</p>
   </div>
 
   <div v-if="memoryPlaces.length" class="memory-card">
-    <h3>🎖️  Ключевые места памяти</h3>
+    <h3>🎖️  Объекты военно-исторического наследия</h3>
 
     <ul>
       <li v-for="item in memoryPlaces" :key="item">
@@ -420,6 +419,8 @@ function downloadPdf() {
       </li>
     </ul>
   </div>
+  <div class="result" v-html="formattedResult"></div>
+
   <button
     class="pdf-btn"
     @click="downloadPdf"

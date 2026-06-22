@@ -406,6 +406,20 @@ function downloadPdf() {
   </div>
 
   <div class="result" v-html="formattedResult"></div>
+    <div v-if="history" class="history-card">
+      <h3>📖  Историческая справка</h3>
+      <p>{{ history }}</p>
+  </div>
+
+  <div v-if="memoryPlaces.length" class="memory-card">
+    <h3>🎖️  Ключевые места памяти</h3>
+
+    <ul>
+      <li v-for="item in memoryPlaces" :key="item">
+        {{ item }}
+      </li>
+    </ul>
+  </div>
   <button
     class="pdf-btn"
     @click="downloadPdf"
@@ -1143,5 +1157,32 @@ button:hover {
 .destination-card {
   padding: 16px 20px;
   min-height: 70px;
+}
+
+.history-card,
+.memory-card {
+  margin-top: 24px;
+  padding: 24px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.15);
+  backdrop-filter: blur(12px);
+}
+
+.history-card h3,
+.memory-card h3 {
+  margin-bottom: 12px;
+  color: #66d9ff;
+}
+
+.history-card p,
+.memory-card li {
+  color: #fff;
+  line-height: 1.7;
+}
+
+.memory-card ul {
+  margin: 0;
+  padding-left: 20px;
 }
 </style>

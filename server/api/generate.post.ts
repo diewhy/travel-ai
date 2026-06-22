@@ -150,10 +150,23 @@ export default defineEventHandler(async (event) => {
     .replace(/```/g, '')
     .trim()
 
-  const parsed = JSON.parse(cleanText)
+let parsed
 
- return {
-  route: parsed.route,
+try {
+  parsed = JSON.parse(cleanText)
+} catch (error) {
+  console.error('JSON PARSE ERROR:', cleanText)
+
+  return {
+    route: cleanText,
+    history: '',
+    memoryPlaces: [],
+    mapPoints: []
+  }
+}
+
+return {
+  route: parsed.route || '',
   history: parsed.history || '',
   memoryPlaces: parsed.memoryPlaces || [],
   mapPoints: parsed.mapPoints || []

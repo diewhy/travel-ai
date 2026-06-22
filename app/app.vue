@@ -103,11 +103,14 @@ async function generateRoute() {
         place: place.value,
         days: days.value,
         budget: budget.value,
-        travelType: travelType.value
+        travelType: travelType.value,
+        mode: routeMode.value
       }
     })
 
     result.value = response.route
+    history.value = response.history || ''
+    memoryPlaces.value = response.memoryPlaces || []
     mapPoints.value = response.mapPoints || []
 
     saveCurrentRoute()

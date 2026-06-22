@@ -2,20 +2,17 @@ import OpenAI from 'openai'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
+  const isHistoryMode = body.mode === 'history'
   const config = useRuntimeConfig()
 
   const openai = new OpenAI({
     apiKey: config.openaiApiKey
   })
 
-  const response = await openai.responses.create({
-    model: 'gpt-4.1-mini',
-    max_output_tokens: 2200,
-    temperature: 0.7,
-    input: `
+  const travelPrompt = `
 Ты — AI-помощник для путешествий по России.
 
-Составь понятный и полезный маршрут путешествия.
+Составь понятный и полезный туристический маршрут путешествия.
 
 Данные пользователя:
 Место: ${body.place}
@@ -49,7 +46,59 @@ export default defineEventHandler(async (event) => {
 💡  Совет:
 краткий совет
 
-**День 2 — название дня**
+**Итоговый бюджет**
+примерно ... ₽
+
+**Общий совет**
+краткий совет для поездки
+
+Верни ответ строго в JSON формате:
+{
+  "route": "полный туристический маршрут",
+  "history": "",
+  "memoryPlaces": [],
+  "mapPoints": [
+    "место 1",
+    "место 2",
+    "место 3"
+  ]
+}
+
+Никакого текста вне JSON не добавляй.
+`
+
+  const historyPrompt = `
+Ты — AI-помощник по городам воинской славы России.
+
+Составь военно-исторический маршрут по городу.
+
+Данные пользователя:
+Город: ${body.place}
+Количество дней: ${body.days}
+Бюджет: ${body.budget} рублей
+Тип отдыха: ${body.travelType}
+
+Требования:
+- Ответь только на русском языке.
+- Не пиши вступление.
+- Сделай акцент на истории, памяти, памятниках, мемориалах и музеях.
+- Не выдумывай несуществующие объекты.
+- Маршрут должен быть реалистичным.
+- Каждый день должен быть отдельным блоком.
+- В каждом дне укажи места, примерные расходы и совет.
+- В конце укажи примерный итоговый бюджет.
+- Пиши красиво, но кратко.
+
+Обязательно добавь:
+- краткую историческую справку о городе;
+- памятные места;
+- музеи;
+- мемориалы;
+- военно-исторический маршрут.
+
+Формат маршрута:
+
+**День 1 — название дня**
 📍  Места:
 - место 1
 - место 2
@@ -67,10 +116,38 @@ export default defineEventHandler(async (event) => {
 
 **Общий совет**
 краткий совет для поездки
+
+Верни ответ строго в JSON формате:
+{
+  "route": "полный военно-исторический маршрут по дням",
+  "history": "краткая историческая справка о городе на 4-6 предложений",
+  "memoryPlaces": [
+    "памятное место 1",
+    "памятное место 2",
+    "памятное место 3"
+  ],
+  "mapPoints": [
+    "место 1",
+    "место 2",
+    "место 3"
+  ]
+}
+
+Никакого текста вне JSON не добавляй.
 `
+
+  const response = await openai.responses.create({
+    model: 'gpt-4.1-mini',
+    max_output_tokens: 2500,
+    temperature: 0.7,
+    input: isHistoryMode ? historyPrompt : travelPrompt
   })
 
+  const parsed = JSON.parse(response.output_text)
+
   return {
-    route: response.output_text
+    route: parsed.route,
+    history: parsed.history || '',
+    memoryPlaces: parsed.memoryPlaces || [],
+    mapPoints: parsed.mapPoints || []
   }
-}) 

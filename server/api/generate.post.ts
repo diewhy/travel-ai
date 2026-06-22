@@ -143,12 +143,19 @@ export default defineEventHandler(async (event) => {
     input: isHistoryMode ? historyPrompt : travelPrompt
   })
 
-  const parsed = JSON.parse(response.output_text)
+  const rawText = response.output_text || ''
 
-  return {
-    route: parsed.route,
-    history: parsed.history || '',
-    memoryPlaces: parsed.memoryPlaces || [],
-    mapPoints: parsed.mapPoints || []
-  }
+  const cleanText = rawText
+    .replace(/```json/g, '')
+    .replace(/```/g, '')
+    .trim()
+
+  const parsed = JSON.parse(cleanText)
+
+ return {
+  route: parsed.route,
+  history: parsed.history || '',
+  memoryPlaces: parsed.memoryPlaces || [],
+  mapPoints: parsed.mapPoints || []
+}
 })

@@ -151,3 +151,4 @@ export default defineEventHandler(async (event) => {
     memoryPlaces: parsed.memoryPlaces || [],
     mapPoints: parsed.mapPoints || []
   }
+})

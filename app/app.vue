@@ -10,6 +10,8 @@ const travelType = ref('Активный')
 const savedRoutes = ref([])
 const result = ref ('')
 const mapPoints = ref([])
+const history = ref('')
+const memoryPlaces = ref([])
 const formattedResult = computed (() => {
   return result.value
   .replace (/\*\*(.*?)\*\*/g, '<h3>$1</h3>')

@@ -122,35 +122,47 @@ function drawPoints() {
     })
   })
 
-  Promise.all(geocodePromises).then(() => {
-    coordsList.forEach((item) => {
-      const placemark = new window.ymaps.Placemark(
-        item.coords,
-        {
-          balloonContent: item.name,
-          hintContent: item.name
-        },
-        {
-          preset: 'islands#blueDotIcon'
-        }
-      )
+  if (coordsList.length > 1) {
 
-      map.geoObjects.add(placemark)
+    const routePoints = coordsList.map(item => item.coords)
+
+    window.ymaps.route(routePoints, {
+        mapStateAutoApply: false
+    }).then((route) => {
+
+        route.getPaths().options.set({
+            strokeColor: '#00bfff',
+            strokeWidth: 5,
+            strokeOpacity: 0.9
+        })
+
+        map.geoObjects.add(route)
+
+        const bounds = route.getBounds()
+
+        if (bounds) {
+            map.setBounds(bounds, {
+                checkZoomRange: true,
+                zoomMargin: 60
+            })
+        }
+
+    }).catch(() => {
+
+        const line = new window.ymaps.Polyline(
+            routePoints,
+            {},
+            {
+                strokeColor: '#00bfff',
+                strokeWidth: 5,
+                strokeOpacity: 0.9
+            }
+        )
+
+        map.geoObjects.add(line)
+
     })
-
-    if (coordsList.length > 1) {
-      const line = new window.ymaps.Polyline(
-        coordsList.map((item) => item.coords),
-        {},
-        {
-          strokeColor: '#00bfff',
-          strokeWidth: 5,
-          strokeOpacity: 0.9
-        }
-      )
-
-      map.geoObjects.add(line)
-    }
+}
 
     const bounds = map.geoObjects.getBounds()
 
@@ -166,8 +178,7 @@ function drawPoints() {
     setTimeout(() => {
       map.container.fitToViewport()
     }, 300)
-  })
-}
+  }
 
 function updateMap() {
   if (!map) return

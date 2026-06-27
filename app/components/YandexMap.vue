@@ -181,7 +181,7 @@ function drawPoints() {
         coords: fallbackCenter
       })
     })
-  })
+  }
 
   if (coordsList.length > 1) {
 
@@ -239,7 +239,6 @@ function drawPoints() {
     setTimeout(() => {
       map.container.fitToViewport()
     }, 300)
-  }
 
 function updateMap() {
   if (!map) return

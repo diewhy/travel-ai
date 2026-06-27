@@ -431,9 +431,11 @@ function downloadPdf() {
 
 <YandexMap
   v-if="result"
+  :key="place + '-' + mapPoints.length"
   :place="place"
   :points="mapPoints"
-> </YandexMap>
+> 
+</YandexMap>
 
 <section
   v-if="savedRoutes.length"

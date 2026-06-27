@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, watch } from 'vue'
+import { onMounted, watch, ref } from 'vue'
 
 const props = defineProps({
   place: {
@@ -32,6 +32,8 @@ const centers = {
 
 let map = null
 
+const mapEl = ref(null)
+
 function loadScript() {
   return new Promise((resolve, reject) => {
     if (window.ymaps) {
@@ -51,7 +53,7 @@ function loadScript() {
 async function initMap() {
   if (map) return
 
-  const container = document.getElementById('yandex-map')
+  const container = mapEl.value
   if (!container) return
 
   const ymaps = await loadScript()
@@ -195,7 +197,12 @@ watch(
   <section class="map-card">
     <h2>Карта путешествия</h2>
 
-    <div id="yandex-map" class="yandex-map"></div>
+    <div 
+      ref="mapEl"
+      class="yandex-map"
+      style="width: 100%; height: 420px; min-height: 420px; display: block; border-radius: 22px; overflow: hidden; background: rgba(255,255,255,.25); border: 2px solid rgba(255,255,255,.35);"
+    >
+  </div>
   </section>
 </template>
 

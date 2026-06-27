@@ -84,10 +84,71 @@ function drawPoints() {
   const points = props.points?.length
     ? props.points
     : [props.place]
+    console.log('MAP PLACE:', props.place)
+    console.log('MAP POINTS:', props.points)
+    console.log('POINTS USED:', points)
 
   const coordsList = []
 
   const geocodePromises = points.map((point) => {
+     console.log('COORDS LIST:', coordsList)
+
+  coordsList.forEach((item) => {
+    const placemark = new window.ymaps.Placemark(
+      item.coords,
+      {
+        balloonContent: item.name,
+        hintContent: item.name
+      },
+      {
+        preset: 'islands#blueDotIcon'
+      }
+    )
+
+    map.geoObjects.add(placemark)
+  })
+
+  if (coordsList.length > 1) {
+    const routePoints = coordsList.map(item => item.coords)
+
+    window.ymaps.route(routePoints, {
+      mapStateAutoApply: false
+    }).then((route) => {
+      map.geoObjects.add(route)
+
+      const bounds = route.getBounds()
+      if (bounds) {
+        map.setBounds(bounds, {
+          checkZoomRange: true,
+          zoomMargin: 60
+        })
+      }
+    }).catch(() => {
+      const line = new window.ymaps.Polyline(
+        routePoints,
+        {},
+        {
+          strokeColor: '#00bfff',
+          strokeWidth: 5,
+          strokeOpacity: 0.9
+        }
+      )
+
+      map.geoObjects.add(line)
+    })
+  }
+
+  const bounds = map.geoObjects.getBounds()
+
+  if (bounds) {
+    map.setBounds(bounds, {
+      checkZoomRange: true,
+      zoomMargin: 60
+    })
+  } else {
+    map.setCenter(fallbackCenter, 8)
+  }
+})
     const pointName = String(point).trim()
 
     if (centers[pointName]) {
@@ -187,6 +248,7 @@ function updateMap() {
 
   map.setCenter(center, 8, { duration: 600 })
   drawPoints()
+
 }
 
 onMounted(() => {

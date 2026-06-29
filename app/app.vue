@@ -266,8 +266,14 @@ function downloadPdf() {
     <div class="badge">Новый способ планировать путешествия</div>
 
     <h2 class="hero-question">
-      Куда хотите отправиться?
-    </h2>
+  {{
+    routeMode === 'moscowArt'
+      ? 'Где будем рисовать Москву?'
+      : routeMode === 'history'
+        ? 'Какой город воинской славы посетим?'
+        : 'Куда хотите отправиться?'
+  }}
+</h2>
 
     <div class="mode-switch">
       <div
@@ -275,7 +281,7 @@ function downloadPdf() {
         :class="{ active: routeMode === 'travel' }"
         @click="routeMode = 'travel'"
       >
-        Туристические маршруты
+        Туризм
       </div>
 
     <div
@@ -283,7 +289,15 @@ function downloadPdf() {
       :class="{ active: routeMode === 'history' }"
       @click="routeMode = 'history'"
     >
-      Города воинской славы
+      Военная история
+    </div>
+
+    <div
+      class="mode-btn"
+      :class="{ active: routeMode === 'moscowArt' }"
+      @click="routeMode = 'moscowArt'"
+    >
+      Москва в красках
     </div>
   </div>
 
@@ -350,6 +364,41 @@ function downloadPdf() {
     <strong>Елец</strong>
   </div>
 </div>
+
+
+
+<div v-if="routeMode === 'moscowArt'" class="destinations">
+  <div class="destination-card altai" @click="selectDestination('Арбат')">
+    <span>🎨 </span>
+    <strong>Арбат</strong>
+  </div>
+
+  <div class="destination-card baikal" @click="selectDestination('ВДНХ')">
+    <span>🎡 </span>
+    <strong>ВДНХ</strong>
+  </div>
+
+  <div class="destination-card karelia" @click="selectDestination('Коломенское')">
+    <span>🏛️ </span>
+    <strong>Коломенское</strong>
+  </div>
+
+  <div class="destination-card kamchatka" @click="selectDestination('Царицыно')">
+    <span>🏰 </span>
+    <strong>Царицыно</strong>
+  </div>
+
+  <div class="destination-card dagestan" @click="selectDestination('Зарядье')">
+    <span>🌿 </span>
+    <strong>Зарядье</strong>
+  </div>
+
+  <div class="destination-card sochi" @click="selectDestination('Воробьёвы горы')">
+    <span>🌄 </span>
+    <strong>Воробьёвы горы</strong>
+  </div>
+</div>
+
 </div>
 </Transition>
 
@@ -357,19 +406,28 @@ function downloadPdf() {
       <section v-if="showPlanner" class="planner-card">
         <button class="close-btn" @click="showPlanner = false; result = ''; days = ''; budget = ''">×</button>
       <h2>Собрать маршрут</h2>
-      <input v-model="place" placeholder="Куда хотите поехать?" />
-      <input v-model="days" placeholder="Сколько дней?" />
-      <input v-model="budget" placeholder="Бюджет, ₽" />
-
-      <select v-model="travelType">
-        <option value="Активный">Активный отдых</option>
-        <option value="Семейный">Семейный отдых</option>
-        <option value="Автомобильный">Автопутешествие</option>
-        <option value="Гастрономический">Гастротур</option>
-        <option value="Эконом">Эконом</option>
-        <option value="Люкс">Люкс</option>
-      </select>
-
+      <input
+        v-model="place"
+        :placeholder="
+        routeMode === 'moscowArt'
+        ? 'Например: Арбат, ВДНХ, Зарядье'
+          : routeMode === 'history'
+            ? 'Например: Ржев, Волоколамск, Курск'
+            : 'Например: Алтай, Байкал, Камчатка'
+        "
+      >
+      <input
+        v-model="days"
+        type="number"
+        :placeholder="routeMode === 'moscowArt' ? 'Сколько пленэров?' : 'Сколько дней?'"
+      />
+      <input
+        v-model="budget"
+        type="number"
+        :placeholder="routeMode === 'moscowArt' ? 'Бюджет на материалы, ₽' : 'Бюджет, ₽'"
+      />
+    <div v-if="routeMode !== 'moscowArt'">  
+    </div>       
       <button @click="generateRoute">
         Сгенерировать маршрут
       </button>

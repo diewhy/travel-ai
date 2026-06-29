@@ -4,6 +4,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const isHistoryMode = body.mode === 'history'
   const config = useRuntimeConfig()
+  const isMoscowArtMode = body.mode === 'moscowArt'
 
   const openai = new OpenAI({
     apiKey: config.openaiApiKey
@@ -136,13 +137,59 @@ export default defineEventHandler(async (event) => {
 Никакого текста вне JSON не добавляй.
 `
 
-  const response = await openai.responses.create({
-    model: 'gpt-4.1-mini',
-    max_output_tokens: 2500,
-    temperature: 0.7,
-    input: isHistoryMode ? historyPrompt : travelPrompt
-  })
+const moscowArtPrompt = `
+Ты — AI-помощник проекта «Москва в красках».
 
+Составь художественный маршрут по Москве для открытого пленэра.
+
+Данные пользователя:
+Локация: ${body.place}
+Количество дней: ${body.days}
+Бюджет: ${body.budget} рублей
+
+Требования:
+- Ответь только на русском языке.
+- Сделай акцент на культурном наследии Москвы.
+- Объясни, почему место интересно для рисования.
+- Добавь историческую справку.
+- Укажи лучшие точки для пленэра.
+- Укажи, что взять с собой.
+- Составь маршрут по дням.
+- Не выдумывай несуществующие объекты.
+- Пиши красиво, но кратко.
+
+Верни ответ строго в JSON формате:
+{
+  "route": "полный художественный маршрут по дням",
+  "history": "краткая историческая справка о локации",
+  "memoryPlaces": [
+    "точка для пленэра 1",
+    "точка для пленэра 2",
+    "точка для пленэра 3"
+  ],
+  "mapPoints": [
+    "место 1",
+    "место 2",
+    "место 3"
+  ]
+}
+
+Никакого текста вне JSON не добавляй.
+`
+
+  const prompt =
+  isMoscowArtMode
+    ? moscowArtPrompt
+    : isHistoryMode
+      ? historyPrompt
+      : travelPrompt
+
+const response = await openai.responses.create({
+  model: 'gpt-4.1-mini',
+  max_output_tokens: 2500,
+  temperature: 0.7,
+  input: prompt
+})
   const rawText = response.output_text || ''
 
   const cleanText = rawText

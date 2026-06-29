@@ -251,10 +251,18 @@ function downloadPdf() {
   <div class="page">
 <main class="hero center-hero">
   <section class="hero-center">
-    <img src="/logo.png" alt="Открой Россию" class="main-logo" />
+    <img src="/logo222.png" alt="Открой Россию" class="main-logo" />
   
-    <h1 class="hero-title">Открой Россию</h1>
-    <p class="hero-subtitle">Путешествия начинаются здесь</p>
+    <h1 class="hero-title">
+      {{ routeMode === 'moscowArt' ? 'Москва в красках' : 'Открой Россию' }}
+    </h1>
+    <p class="hero-subtitle">
+      {{ 
+        routeMode === 'moscowArt'
+          ? 'Открытые художественные маршруты столицы'
+          : 'Путешествия начинаются здесь'
+      }}
+    </p>
     <Transition name="fade">
       <div v-if="!showPlanner">
     <div class="stats">
@@ -263,7 +271,15 @@ function downloadPdf() {
       <div><strong>AI</strong><span>генерация</span></div>
     </div>
 
-    <div class="badge">Новый способ планировать путешествия</div>
+    <div class="badge">
+      {{ 
+        routeMode === 'moscowArt'
+        ? 'Культурное наследие Москвы через творчество'
+        : routeMode === 'history'
+          ? 'Патриотические маршруты России'
+          : 'Новый способ планировать путешествия'
+      }}
+    </div>
 
     <h2 class="hero-question">
   {{
@@ -429,7 +445,7 @@ function downloadPdf() {
     <div v-if="routeMode !== 'moscowArt'">  
     </div>       
       <button @click="generateRoute">
-        Сгенерировать маршрут
+        {{ routeMode === 'moscowArt' ? 'Создать маршрут плэнера' : 'Сгенерировать маршрут' }}
       </button>
       
     </section>
@@ -541,13 +557,10 @@ body {
   margin: 0;
   font-family: 'Manrope', Arial, sans-serif;
   background:
-    linear-gradient(rgba(4, 15, 35, 0.72), rgba(4, 15, 35, 0.82)
-    ),
-    url('/fon.png');
+    url('/fonosn.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-attachment: fixed;  
   min-height: 100vh;
 }
 
@@ -558,14 +571,6 @@ body {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-}
-
-.page::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: rgba(5,15,35,0.55);
-  z-index: -1;
 }
 
 .planner-card,
@@ -847,12 +852,14 @@ button:hover {
 }
 
 .main-logo {
-  width: 300px !important;
+  width: 250px;
   max-width: none;
   height: auto;
   display: block;
   filter: drop-shadow(0 18px 45px rgba(0, 0, 0, 0.38));
   margin: 0 auto 18px;
+  margin-bottom: -50px;
+  margin-top: -70px;
 }
 
 .hero-title {

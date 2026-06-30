@@ -142,7 +142,7 @@ const selectedMoscowPlaces = moscowArtPlaces
     item.name.toLowerCase().includes(String(body.place).toLowerCase()
 ))
 
-const moscowArtPlacesForPromt = 
+const moscowArtPlacesForPrompt = 
   selectedMoscowPlaces.length > 0
   ? selectedMoscowPlaces
   : moscowArtPlaces.slice (0, 6)
@@ -159,7 +159,7 @@ const moscowArtPrompt = `
 
 Доступные художественные точки Москвы:
 
-${JSON.stringify(moscowArtPlacesForPromt, null, 2)}
+${JSON.stringify(moscowArtPlacesForPrompt, null, 2)}
 
 Используй ТОЛЬКО эти точки при построении маршрута.
 Не придумывай новые объекты
@@ -178,31 +178,18 @@ ${JSON.stringify(moscowArtPlacesForPromt, null, 2)}
 Верни ответ СТРОГО в JSON.
 
 {
-  "title": "Название художественного маршрута",
-  "about": "Краткое описание маршрута (2-3 предложения)",
-  "pleinairs": [
-    {
-      "name": "Название пленэра",
-      "place": "Место",
-      "draw": [
-        "что рисуем",
-        "что рисуем",
-        "что рисуем"
-      ],
-      "skill": "Какой художественный навык развивается",
-      "history": "Краткая история места",
-      "duration": "60 минут",
-      "bestTime": "Лучшее время",
-      "tip": "Совет художнику"
-    }
+  "route": "Полный художественный маршрут по дням",
+  "history": "Краткая информация о выбранной локации",
+  "memoryPlaces": [
+    "Что будем рисовать 1",
+    "Что будем рисовать 2",
+    "Что будем рисовать 3"
   ],
-  "equipment": [
-    "Альбом",
-    "Карандаш",
-    "Акварель",
-    "Вода"
-  ],
-  "summary": "Краткий итог маршрута"
+  "mapPoints": [
+    "Точка 1",
+    "Точка 2",
+    "Точка 3"
+  ]
 }
 
 Никакого текста вне JSON не добавляй.

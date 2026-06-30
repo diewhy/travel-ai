@@ -469,7 +469,13 @@ function downloadPdf() {
 </div>
     <div>
       <p class="route-label">Ваш маршрут готов</p>
-      <h2>Маршрут по направлению: {{ place || 'Россия' }}</h2>
+      <h2>
+        {{ 
+          routeMode === 'moscowArt'
+            ? `🎨 Художественный маршрут: ${place || 'Москва'}`
+            : `Маршрут по направлению: ${place || 'Россия'}`  
+        }}
+      </h2>
     </div>
 
     <div class="route-stats">
@@ -480,12 +486,20 @@ function downloadPdf() {
   </div>
 
   <div v-if="history" class="history-card">
-      <h3>📖  Историческая справка</h3>
+      <h3>
+        {{ routeMode === 'moscowArt' ? '🏛️ О локации' : '📖  Историческая справка'}}
+      </h3>
       <p>{{ history }}</p>
   </div>
 
   <div v-if="memoryPlaces.length" class="memory-card">
-    <h3>🎖️  Объекты военно-исторического наследия</h3>
+    <h3>
+      {{
+        routeMode === 'moscowArt'
+        ? '🎨 Что будем рисовать'
+        : '🎖️  Объекты военно-исторического наследия'
+      }}
+    </h3>
 
     <ul>
       <li v-for="item in memoryPlaces" :key="item">

@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import { moscowArtPlaces } from '../../data/moscowArtPlaces'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -136,6 +137,15 @@ export default defineEventHandler(async (event) => {
 
 Никакого текста вне JSON не добавляй.
 `
+const selectedMoscowPlaces = moscowArtPlaces
+  .filter ((item) =>
+    item.name.toLowerCase().includes(String(body.place).toLowerCase()
+))
+
+const moscowArtPlacesForPromt = 
+  selectedMoscowPlaces.length > 0
+  ? selectedMoscowPlaces
+  : moscowArtPlaces.slice (0, 6)
 
 const moscowArtPrompt = `
 Ты — AI-помощник проекта «Москва в красках».
@@ -146,6 +156,13 @@ const moscowArtPrompt = `
 Локация: ${body.place}
 Количество дней: ${body.days}
 Бюджет: ${body.budget} рублей
+
+Доступные художественные точки Москвы:
+
+${JSON.stringify(moscowArtPlacesForPromt, null, 2)}
+
+Используй ТОЛЬКО эти точки при построении маршрута.
+Не придумывай новые объекты
 
 Требования:
 - Ответь только на русском языке.

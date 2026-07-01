@@ -12,10 +12,14 @@ const result = ref ('')
 const mapPoints = ref([])
 const history = ref('')
 const memoryPlaces = ref([])
-const formattedResult = computed (() => {
-  return result.value
-  .replace (/\*\*(.*?)\*\*/g, '<h3>$1</h3>')
-  .replace (/\n/g, '<br>')
+const formattedResult = computed(() => {
+  const text = typeof result.value === 'string'
+    ? result.value
+    : JSON.stringify(result.value, null, 2)
+
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<h3>$1</h3>')
+    .replace(/\n/g, '<br>')
 })
 const showPlanner = ref(false)
 const routeMode = ref('travel')
@@ -110,7 +114,9 @@ async function generateRoute() {
       }
     })
 
-    result.value = response.route
+    result.value = typeof response.route === 'string'
+      ? response.route
+      : JSON.stringify(response.route, null, 2)
     history.value = response.history || ''
     memoryPlaces.value = response.memoryPlaces || []
     mapPoints.value = response.mapPoints || []
@@ -517,13 +523,13 @@ function downloadPdf() {
   </button>
 </section>
 
-<YandexMap
+<!-- <YandexMap -->
   v-if="result"
   :key="place + '-' + mapPoints.length"
   :place="place"
   :points="mapPoints"
 > 
-</YandexMap>
+<!-- </YandexMap>  -->
 
 <section
   v-if="savedRoutes.length"

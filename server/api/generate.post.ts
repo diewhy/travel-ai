@@ -1,5 +1,5 @@
+import { moscowArtPlaces } from '../data/moscowArtPlaces.js'
 import OpenAI from 'openai'
-import { moscowArtPlaces } from '../../data/moscowArtPlaces'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)

@@ -1,3 +1,4 @@
+import { parse } from 'vue/compiler-sfc'
 import { moscowArtPlaces } from '../data/moscowArtPlaces.js'
 import OpenAI from 'openai'
 
@@ -192,6 +193,7 @@ ${JSON.stringify(moscowArtPlacesForPrompt, null, 2)}
   ]
 }
 
+"route": "ВАЖНО: это должнап быть одна строка текста, не объект и не массив. Внутри строки оформи пленэры через переносы строк."
 Никакого текста вне JSON не добавляй.
 `
 
@@ -230,10 +232,17 @@ try {
   }
 }
 
+const routeText =
+  typeof parsed.route === 'string'
+    ? parsed.route
+    : JSON.stringify(parsed.route, null, 2)
+
+console.log(parsed)
+    
 return {
-  route: parsed.route || '',
+  route: routeText,
   history: parsed.history || '',
-  memoryPlaces: parsed.memoryPlaces || [],
-  mapPoints: parsed.mapPoints || []
+  memoryPlaces: Array.isArray(parsed.memoryPlaces) ? parsed.memoryPlaces : [],
+  mapPoints: Array.isArray(parsed.mapPoints) ? parsed.mapPoints : []
 }
 })

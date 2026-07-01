@@ -119,6 +119,8 @@ async function generateRoute() {
       }
     })
 
+    console.log(response)
+
     result.value = typeof response.route === 'string'
       ? response.route
       : JSON.stringify(response.route, null, 2)

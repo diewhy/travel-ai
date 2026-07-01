@@ -243,6 +243,12 @@ return {
   route: routeText,
   history: parsed.history || '',
   memoryPlaces: Array.isArray(parsed.memoryPlaces) ? parsed.memoryPlaces : [],
-  mapPoints: Array.isArray(parsed.mapPoints) ? parsed.mapPoints : []
+  mapPoints: Array.isArray(parsed.mapPoints) ? parsed.mapPoints : [],
+
+  title: parsed.title || '',
+  about: parsed.about || '',
+  pleinairs: Array.isArray(parsed.pleinairs) ? parsed.pleinairs : [],
+  equipment: Array.isArray(parsed.equipment) ? parsed.equipment : [],
+  summary: parsed.summary || ''
 }
 })

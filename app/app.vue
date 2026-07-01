@@ -12,6 +12,11 @@ const result = ref ('')
 const mapPoints = ref([])
 const history = ref('')
 const memoryPlaces = ref([])
+const routeTitle = ref('')
+const routeAbout = ref('')
+const pleinairs = ref([])
+const equipment = ref([])
+const routeSummary = ref('')
 const formattedResult = computed(() => {
   const text = typeof result.value === 'string'
     ? result.value
@@ -120,6 +125,11 @@ async function generateRoute() {
     history.value = response.history || ''
     memoryPlaces.value = response.memoryPlaces || []
     mapPoints.value = response.mapPoints || []
+    routeTitle.value = response.title || ''
+    routeAbout.value = response.about || ''
+    pleinairs.value = response.pleinairs || []
+    equipment.value = response.equipment || []
+    routeSummary.value = response.summary || ''
 
     saveCurrentRoute()
 

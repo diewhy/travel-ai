@@ -523,6 +523,46 @@ function downloadPdf() {
       </li>
     </ul>
   </div>
+
+  <div v-if="pleinairs.length" class="pleinair-list">
+
+  <div
+    v-for="(item, index) in pleinairs"
+    :key="index"
+    class="glass-card"
+  >
+
+    <h3>🎨 Пленэр {{ index + 1 }}</h3>
+
+    <p><strong>📍 {{ item.place }}</strong></p>
+
+    <p>{{ item.history }}</p>
+
+    <br>
+
+    <strong>Что рисуем:</strong>
+
+    <ul>
+      <li
+        v-for="draw in item.draw"
+        :key="draw"
+      >
+        {{ draw }}
+      </li>
+    </ul>
+
+    <p><strong>Навык:</strong> {{ item.skill }}</p>
+
+    <p><strong>Лучшее время:</strong> {{ item.bestTime }}</p>
+
+    <p><strong>Продолжительность:</strong> {{ item.duration }}</p>
+
+    <p><strong>Совет:</strong> {{ item.tip }}</p>
+
+  </div>
+
+</div>
+
   <div class="result" v-html="formattedResult"></div>
 
   <button

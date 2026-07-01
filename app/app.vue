@@ -27,7 +27,7 @@ const formattedResult = computed(() => {
     .replace(/\n/g, '<br>')
 })
 const showPlanner = ref(false)
-const routeMode = ref('travel')
+const routeMode = ref('history')
 const destinationImages = {
   'Алтай' : '/places/altai.jpg',
   'Байкал' : '/places/baikal.jpg',
@@ -310,14 +310,6 @@ function downloadPdf() {
 </h2>
 
     <div class="mode-switch">
-      <div
-        class="mode-btn"
-        :class="{ active: routeMode === 'travel' }"
-        @click="routeMode = 'travel'"
-      >
-        Туризм
-      </div>
-
     <div
       class="mode-btn"
       :class="{ active: routeMode === 'history' }"
@@ -334,39 +326,6 @@ function downloadPdf() {
       Москва в красках
     </div>
   </div>
-
-    <div v-if="routeMode === 'travel'" class="destinations">
-      <div class="destination-card altai" @click="selectDestination('Алтай')">
-        <span>⛰️ </span>
-        <strong>Алтай</strong>
-      </div>
-
-      <div class="destination-card baikal" @click="selectDestination('Байкал')">
-        <span>🌊 </span>
-        <strong>Байкал</strong>
-      </div>
-
-      <div class="destination-card karelia" @click="selectDestination('Карелия')">
-        <span>🌲 </span>
-        <strong>Карелия</strong>
-      </div>
-
-      <div class="destination-card kamchatka" @click="selectDestination('Камчатка')">
-        <span>🌋 </span>
-        <strong>Камчатка</strong>
-      </div>
-
-      <div class="destination-card dagestan" @click="selectDestination('Дагестан')">
-        <span>⛰️ </span>
-        <strong>Дагестан</strong>
-      </div>
-
-      <div class="destination-card sochi" @click="selectDestination('Сочи')">
-        <span>🌴 </span>
-        <strong>Сочи</strong>
-      </div>
-</div>
-
 <div v-if="routeMode === 'history'" class="destinations">
   <div class="destination-card altai" @click="selectDestination('Ржев')">
     <span>🎖️ </span>

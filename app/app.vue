@@ -5,6 +5,7 @@ import YandexMap from '~/components/YandexMap.vue'
 
 const place = ref('')
 const days = ref('')
+const routeDuration = ref('short')
 const budget = ref ('')
 const travelType = ref('Активный')
 const savedRoutes = ref([])
@@ -115,7 +116,8 @@ async function generateRoute() {
         days: days.value,
         budget: budget.value,
         travelType: travelType.value,
-        mode: routeMode.value
+        mode: routeMode.value,
+        routeDuration: routeDuration.value
       }
     })
 
@@ -409,11 +411,37 @@ function downloadPdf() {
             : 'Например: Алтай, Байкал, Камчатка'
         "
       >
-      <input
-        v-model="days"
-        type="number"
-        :placeholder="routeMode === 'moscowArt' ? 'Сколько пленэров?' : 'Сколько дней?'"
-      />
+      <div class="duration-options">
+  <button
+    type="button"
+    class="duration-btn"
+    :class="{ active: routeDuration === 'short' }"
+    @click="routeDuration = 'short'; days = '1'"
+  >
+    🕐 Короткий
+    <span>2–3 часа</span>
+  </button>
+
+  <button
+    type="button"
+    class="duration-btn"
+    :class="{ active: routeDuration === 'day' }"
+    @click="routeDuration = 'day'; days = '1'"
+  >
+    🌇 На день
+    <span>6–8 часов</span>
+  </button>
+
+  <button
+    type="button"
+    class="duration-btn"
+    :class="{ active: routeDuration === 'long' }"
+    @click="routeDuration = 'long'; days = '3'"
+  >
+    🗓 Несколько дней
+    <span>2–3 дня</span>
+  </button>
+</div>
       <input
         v-model="budget"
         type="number"
@@ -1283,5 +1311,33 @@ button:hover {
 .memory-card ul {
   margin: 0;
   padding-left: 20px;
+}
+
+.duration-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.duration-btn {
+  margin: 0;
+  padding: 16px 14px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.22);
+  color: white;
+  font-weight: 800;
+}
+
+.duration-btn span {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  opacity: .8;
+}
+
+.duration-btn.active {
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
 }
 </style>

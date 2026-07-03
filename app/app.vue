@@ -2,6 +2,7 @@ vue
 <script setup> 
 import {ref, computed, nextTick, onMounted, onBeforeUnmount} from 'vue'
 import YandexMap from '~/components/YandexMap.vue'
+import { cities } from '../data/cities.js'
 
 const place = ref('')
 const days = ref('')
@@ -29,6 +30,7 @@ const formattedResult = computed(() => {
 })
 const showPlanner = ref(false)
 const routeMode = ref('history')
+const cityGroups = cities
 const destinationImages = {
   'Алтай' : '/places/altai.jpg',
   'Байкал' : '/places/baikal.jpg',
@@ -315,7 +317,7 @@ function downloadPdf() {
     <div
       class="mode-btn"
       :class="{ active: routeMode === 'history' }"
-      @click="routeMode = 'history'"
+      @click="routeMode = 'history'; showPlanner = true, place=''"
     >
       Военная история
     </div>
@@ -323,77 +325,11 @@ function downloadPdf() {
     <div
       class="mode-btn"
       :class="{ active: routeMode === 'moscowArt' }"
-      @click="routeMode = 'moscowArt'"
+      @click="routeMode = 'moscowArt'; showPlanner = true, place=''"
     >
       Москва в красках
     </div>
   </div>
-<div v-if="routeMode === 'history'" class="destinations">
-  <div class="destination-card altai" @click="selectDestination('Ржев')">
-    <span>🎖️ </span>
-    <strong>Ржев</strong>
-  </div>
-
-  <div class="destination-card baikal" @click="selectDestination('Волоколамск')">
-    <span>🛡️ </span>
-    <strong>Волоколамск</strong>
-  </div>
-
-  <div class="destination-card karelia" @click="selectDestination('Белгород')">
-    <span>⭐</span>
-    <strong>Белгород</strong>
-  </div>
-
-  <div class="destination-card kamchatka" @click="selectDestination('Курск')">
-    <span>⚔️ </span>
-    <strong>Курск</strong>
-  </div>
-
-  <div class="destination-card dagestan" @click="selectDestination('Кронштадт')">
-    <span>🚢 </span>
-    <strong>Кронштадт</strong>
-  </div>
-
-  <div class="destination-card sochi" @click="selectDestination('Елец')">
-    <span>🏛️ </span>
-    <strong>Елец</strong>
-  </div>
-</div>
-
-
-
-<div v-if="routeMode === 'moscowArt'" class="destinations">
-  <div class="destination-card altai" @click="selectDestination('Арбат')">
-    <span>🎨 </span>
-    <strong>Арбат</strong>
-  </div>
-
-  <div class="destination-card baikal" @click="selectDestination('ВДНХ')">
-    <span>🎡 </span>
-    <strong>ВДНХ</strong>
-  </div>
-
-  <div class="destination-card karelia" @click="selectDestination('Коломенское')">
-    <span>🏛️ </span>
-    <strong>Коломенское</strong>
-  </div>
-
-  <div class="destination-card kamchatka" @click="selectDestination('Царицыно')">
-    <span>🏰 </span>
-    <strong>Царицыно</strong>
-  </div>
-
-  <div class="destination-card dagestan" @click="selectDestination('Зарядье')">
-    <span>🌿 </span>
-    <strong>Зарядье</strong>
-  </div>
-
-  <div class="destination-card sochi" @click="selectDestination('Воробьёвы горы')">
-    <span>🌄 </span>
-    <strong>Воробьёвы горы</strong>
-  </div>
-</div>
-
 </div>
 </Transition>
 
@@ -401,16 +337,27 @@ function downloadPdf() {
       <section v-if="showPlanner" class="planner-card">
         <button class="close-btn" @click="showPlanner = false; result = ''; days = ''; budget = ''">×</button>
       <h2>Собрать маршрут</h2>
-      <input
-        v-model="place"
-        :placeholder="
-        routeMode === 'moscowArt'
-        ? 'Например: Арбат, ВДНХ, Зарядье'
-          : routeMode === 'history'
-            ? 'Например: Ржев, Волоколамск, Курск'
-            : 'Например: Алтай, Байкал, Камчатка'
-        "
-      >
+      <div class="city-picker">
+        <div
+          v-for="group in cityGroups"
+          :key="group.group"
+          class="city-group"
+        >
+          <h3>{{ group.group }}</h3>
+          <div class="city-grid">
+            <button
+              v-for="city in group.items"
+              :key="city"
+              type="button"
+              class="city-btn"
+              :class="{active: place === city}"
+              @click="place = city"
+            >
+              {{ city }}
+            </button>
+          </div>
+        </div>
+      </div>
       <div class="duration-options">
   <button
     type="button"
@@ -1339,5 +1286,43 @@ button:hover {
 
 .duration-btn.active {
   background: linear-gradient(90deg, #2563eb, #06b6d4);
+}
+
+.city-picker {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.city-group {
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.city-group h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: rgba(255,255,255,.85);
+}
+
+.city-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.city-btn {
+  margin: 0;
+  padding: 13px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.22);
+  color: white;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.city-btn.active {
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
+  box-shadow: 0 12px 28px rgba(37,99,235,.32);
 }
 </style>

@@ -28,17 +28,11 @@ const formattedResult = computed(() => {
     .replace(/\*\*(.*?)\*\*/g, '<h3>$1</h3>')
     .replace(/\n/g, '<br>')
 })
-const routeModeName = computed(() => {
-  switch (routeMode.value) {
-    case 'short':
-      return 'Короткий'
-    case 'medium':
-      return 'На день'
-    case 'long':
-      return 'Несколько дней'
-    default:
-      return ''
-  }
+const routeDurationName = computed(() => {
+  if (routeDuration.value === 'short') return 'Короткий'
+  if (routeDuration.value === 'day') return 'На день'
+  if (routeDuration.value === 'long') return 'Несколько дней'
+  return '—'
 })
 const showPlanner = ref(false)
 const routeMode = ref('history')
@@ -504,7 +498,7 @@ function downloadPdf() {
     </div>
 
     <div class="route-stats">
-      <span>📅 {{ routeModeName }} </span>
+      <span>📅 {{ routeDurationName }}</span>
       <span>💰 {{ budget || '—' }} ₽</span>
       <span>🧭 {{ travelType }}</span>
     </div>

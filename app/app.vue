@@ -377,23 +377,10 @@ function downloadPdf() {
     >
       Москва в красках
     </div>
-
-    <button @click="openReadyMoscowRoute">Открыть готовый маршрут по Москве</button>
-    <div class="ready-rote-info">
-      <h3>Москва. Дорогами памяти</h3>
-      <p>
-        Готовый короткий военно-исторический маршрут по центру Москвы на 2-3 часа.
-        Маршрут посвящен ключевым местам памяти защитников Отечества и проходит по самым узнаваемым историческим локациям столицы.
-      </p>
-      <div class="ready-route-points">
-        <span>Александровский сад</span>
-        <span>Могила Неизвестного Солдата</span>
-        <span>Вечный огонь</span>
-        <span>Манежная площадь</span>
-        <span>Красная площадь</span>
-      </div>
-    </div>
   </div>
+
+  <button @click="openReadyMoscowRoute">Открыть готовый маршрут по Москве "Москва. Дорогами памяти"</button>
+  
 </div>
 </Transition>
 
@@ -1426,5 +1413,11 @@ button:hover {
   border: 1px solid rgba(255,255,255,.18);
   font-size: 13px;
   font-weight: 700;
+}
+
+.ready-route-btn {
+  max-width: 430px;
+  margin: 18px auto 0;
+  display: block;
 }
 </style>

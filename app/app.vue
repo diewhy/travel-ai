@@ -28,6 +28,18 @@ const formattedResult = computed(() => {
     .replace(/\*\*(.*?)\*\*/g, '<h3>$1</h3>')
     .replace(/\n/g, '<br>')
 })
+const routeModeName = computed(() => {
+  switch (routeMode.value) {
+    case 'short':
+      return 'Короткий'
+    case 'medium':
+      return 'На день'
+    case 'long':
+      return 'Несколько дней'
+    default:
+      return ''
+  }
+})
 const showPlanner = ref(false)
 const routeMode = ref('history')
 const cityGroups = cities
@@ -309,7 +321,7 @@ function downloadPdf() {
         <h2>Маршрут по направлению: ${place.value}</h2>
 
         <div class="meta">
-          ${routeDuration.value} дней · ${budget.value} ₽ · ${travelType.value}
+          ${routeModeName} дней · ${budget.value} ₽ · ${travelType.value}
         </div>
 
         <div>

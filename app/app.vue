@@ -504,7 +504,7 @@ function downloadPdf() {
     </div>
 
     <div class="route-stats">
-      <span>📅 {{ days || '—' }} дней</span>
+      <span>📅 {{ routeModeName }} </span>
       <span>💰 {{ budget || '—' }} ₽</span>
       <span>🧭 {{ travelType }}</span>
     </div>

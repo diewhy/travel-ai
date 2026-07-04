@@ -87,7 +87,6 @@ function drawPoints() {
 
   const geocodePromises = points.map((point) => {
     const pointName = String(point).trim()
-
     return window.ymaps.geocode(pointName).then((res) => {
       const firstGeoObject = res.geoObjects.get(0)
       if (!firstGeoObject) return
@@ -133,64 +132,6 @@ function drawPoints() {
     }
   })
 }
-
-  if (coordsList.length > 1) {
-
-    const routePoints = coordsList.map(item => item.coords)
-
-    window.ymaps.route(routePoints, {
-        mapStateAutoApply: false
-    }).then((route) => {
-
-        route.getPaths().options.set({
-            strokeColor: '#00bfff',
-            strokeWidth: 5,
-            strokeOpacity: 0.9
-        })
-
-        map.geoObjects.add(route)
-
-        const bounds = route.getBounds()
-
-        if (bounds) {
-            map.setBounds(bounds, {
-                checkZoomRange: true,
-                zoomMargin: 60
-            })
-        }
-
-    }).catch(() => {
-
-        const line = new window.ymaps.Polyline(
-            routePoints,
-            {},
-            {
-                strokeColor: '#00bfff',
-                strokeWidth: 5,
-                strokeOpacity: 0.9
-            }
-        )
-
-        map.geoObjects.add(line)
-
-    })
-}
-
-    const bounds = map.geoObjects.getBounds()
-
-    if (bounds) {
-      map.setBounds(bounds, {
-        checkZoomRange: true,
-        zoomMargin: 60
-      })
-    } else {
-      map.setCenter(fallbackCenter, 8)
-    }
-
-    setTimeout(() => {
-      map.container.fitToViewport()
-    }, 300)
-
 function updateMap() {
   if (!map) return
 

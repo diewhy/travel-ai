@@ -79,53 +79,39 @@ function drawPoints() {
 
   map.geoObjects.removeAll()
 
-  const fallbackCenter = centers[props.place] || centers['Алтай']
+  const coordsList = []
 
   const points = props.points?.length
     ? props.points
     : [props.place]
-    console.log('MAP PLACE:', props.place)
-    console.log('MAP POINTS:', props.points)
-    console.log('POINTS USED:', points)
-
-  const coordsList = []
 
   const geocodePromises = points.map((point) => {
-     console.log('COORDS LIST:', coordsList)
+    const pointName = String(point).trim()
 
-  coordsList.forEach((item) => {
-    const placemark = new window.ymaps.Placemark(
-      item.coords,
-      {
-        balloonContent: item.name,
-        hintContent: item.name
-      },
-      {
-        preset: 'islands#blueDotIcon'
-      }
-    )
+    return window.ymaps.geocode(pointName).then((res) => {
+      const firstGeoObject = res.geoObjects.get(0)
+      if (!firstGeoObject) return
 
-    map.geoObjects.add(placemark)
+      const coords = firstGeoObject.geometry.getCoordinates()
+
+      coordsList.push({
+        name: pointName,
+        coords
+      })
+
+      const placemark = new window.ymaps.Placemark(coords, {
+        balloonContent: pointName,
+        hintContent: pointName
+      })
+
+      map.geoObjects.add(placemark)
+    })
   })
 
-  if (coordsList.length > 1) {
-    const routePoints = coordsList.map(item => item.coords)
-
-    window.ymaps.route(routePoints, {
-      mapStateAutoApply: false
-    }).then((route) => {
-      map.geoObjects.add(route)
-
-      const bounds = route.getBounds()
-      if (bounds) {
-        map.setBounds(bounds, {
-          checkZoomRange: true,
-          zoomMargin: 60
-        })
-      }
-    }).catch(() => {
+  Promise.all(geocodePromises).then(() => {
+    if (coordsList.length > 1) {
       const line = new window.ymaps.Polyline(
-        routePoints,
+        coordsList.map((item) => item.coords),
         {},
         {
           strokeColor: '#00bfff',
@@ -135,53 +121,18 @@ function drawPoints() {
       )
 
       map.geoObjects.add(line)
-    })
-  }
-
-  const bounds = map.geoObjects.getBounds()
-
-  if (bounds) {
-    map.setBounds(bounds, {
-      checkZoomRange: true,
-      zoomMargin: 60
-    })
-  } else {
-    map.setCenter(fallbackCenter, 8)
-  }
-})
-    const pointName = String(point).trim()
-
-    if (centers[pointName]) {
-      coordsList.push({
-        name: pointName,
-        coords: centers[pointName]
-      })
-
-      return Promise.resolve()
     }
 
-    return window.ymaps.geocode(`${props.place}, ${pointName}`).then((res) => {
-      const firstGeoObject = res.geoObjects.get(0)
+    const bounds = map.geoObjects.getBounds()
 
-      if (!firstGeoObject) {
-        coordsList.push({
-          name: pointName,
-          coords: fallbackCenter
-        })
-        return
-      }
-
-      coordsList.push({
-        name: pointName,
-        coords: firstGeoObject.geometry.getCoordinates()
+    if (bounds) {
+      map.setBounds(bounds, {
+        checkZoomRange: true,
+        zoomMargin: 60
       })
-    }).catch(() => {
-      coordsList.push({
-        name: pointName,
-        coords: fallbackCenter
-      })
-    })
-  }
+    }
+  })
+}
 
   if (coordsList.length > 1) {
 

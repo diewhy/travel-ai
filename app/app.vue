@@ -509,13 +509,13 @@ function downloadPdf() {
   </button>
 </section>
 
-<!-- <YandexMap -->
-  v-if="result"
+<<YandexMap
+  v-if="result && mapPoints.length"
   :key="place + '-' + mapPoints.length"
   :place="place"
   :points="mapPoints"
 > 
-<!-- </YandexMap>  -->
+</YandexMap>
 
 <section
   v-if="savedRoutes.length"

@@ -580,7 +580,7 @@ function downloadPdf() {
   {{ mapPoints }}
 </pre>
 
-<<YandexMap
+<YandexMap
   v-if="result && mapPoints.length"
   :key="place + '-' + mapPoints.length"
   :place="selectPlace"

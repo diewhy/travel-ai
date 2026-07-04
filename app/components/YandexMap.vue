@@ -88,27 +88,33 @@ function drawPoints() {
       rawName.toLowerCase().includes(String(props.place).toLowerCase())
       ? rawName
       : `${rawName}, ${props.place}`
-    return window.ymaps.geocode(pointName).then((res) => {
-      const firstGeoObject = res.geoObjects.get(0)
-      console.log('POINT:', pointName,coords)
-      if (!firstGeoObject) {
-        console.warn('Не найдено:', pointName)
-      } return
+    return window.ymaps.geocode(pointName)
+  .then((res) => {
+    const firstGeoObject = res.geoObjects.get(0)
 
-      const coords = firstGeoObject.geometry.getCoordinates()
+    if (!firstGeoObject) {
+      console.warn('Не найдено:', pointName)
+      return
+    }
 
-      coordsList.push({
-        name: pointName,
-        coords
-      })
+    const coords = firstGeoObject.geometry.getCoordinates()
+    console.log('POINT:', pointName, coords)
 
-      const placemark = new window.ymaps.Placemark(coords, {
-        balloonContent: pointName,
-        hintContent: pointName
-      })
-
-      map.geoObjects.add(placemark)
+    coordsList.push({
+      name: pointName,
+      coords
     })
+
+    const placemark = new window.ymaps.Placemark(coords, {
+      balloonContent: pointName,
+      hintContent: pointName
+    })
+
+    map.geoObjects.add(placemark)
+  })
+  .catch((error) => {
+    console.warn('Ошибка геокодинга:', pointName, error)
+  })
   })
 
   Promise.all(geocodePromises).then(() => {

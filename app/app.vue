@@ -379,6 +379,20 @@ function downloadPdf() {
     </div>
 
     <button @click="openReadyMoscowRoute">Открыть готовый маршрут по Москве</button>
+    <div class="ready-rote-info">
+      <h3>Москва. Дорогами памяти</h3>
+      <p>
+        Готовый короткий военно-исторический маршрут по центру Москвы на 2-3 часа.
+        Маршрут посвящен ключевым местам памяти защитников Отечества и проходит по самым узнаваемым историческим локациям столицы.
+      </p>
+      <div class="ready-route-points">
+        <span>Александровский сад</span>
+        <span>Могила Неизвестного Солдата</span>
+        <span>Вечный огонь</span>
+        <span>Манежная площадь</span>
+        <span>Красная площадь</span>
+      </div>
+    </div>
   </div>
 </div>
 </Transition>
@@ -1374,5 +1388,43 @@ button:hover {
 .city-btn.active {
   background: linear-gradient(90deg, #2563eb, #06b6d4);
   box-shadow: 0 12px 28px rgba(37,99,235,.32);
+}
+
+.ready-route-info {
+  max-width: 760px;
+  margin: 18px auto 0;
+  padding: 22px;
+  border-radius: 24px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.2);
+  backdrop-filter: blur(18px);
+  text-align: left;
+}
+
+.ready-route-info h3 {
+  margin: 0 0 10px;
+  color: white;
+  font-size: 22px;
+}
+
+.ready-route-info p {
+  margin: 0 0 16px;
+  color: rgba(255,255,255,.86);
+  line-height: 1.6;
+}
+
+.ready-route-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ready-route-points span {
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.18);
+  font-size: 13px;
+  font-weight: 700;
 }
 </style>

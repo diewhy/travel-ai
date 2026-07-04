@@ -82,10 +82,18 @@ function drawPoints() {
     : [props.place]
 
   const geocodePromises = points.map((point) => {
-    const pointName = String(point).trim()
+    const rawName = String(point).trim()
+
+    const pointName = rawName.toLowerCase().includes('москва') ||
+      rawName.toLowerCase().includes(String(props.place).toLowerCase())
+      ? rawName
+      : `${rawName}, ${props.place}`
     return window.ymaps.geocode(pointName).then((res) => {
       const firstGeoObject = res.geoObjects.get(0)
-      if (!firstGeoObject) return
+      console.log('POINT:', pointName,coords)
+      if (!firstGeoObject) {
+        console.warn('Не найдено:', pointName)
+      } return
 
       const coords = firstGeoObject.geometry.getCoordinates()
 

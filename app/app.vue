@@ -309,7 +309,7 @@ function downloadPdf() {
         <h2>Маршрут по направлению: ${place.value}</h2>
 
         <div class="meta">
-          ${days.value} дней · ${budget.value} ₽ · ${travelType.value}
+          ${routeDuration.value} дней · ${budget.value} ₽ · ${travelType.value}
         </div>
 
         <div>

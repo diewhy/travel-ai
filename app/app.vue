@@ -152,6 +152,16 @@ function selectDestination(name) {
 
 async function generateRoute() {
   result.value = 'Генерируем маршрут, подождите 10-20 секунд...'
+  history.value = ''
+  memoryPlaces.value = []
+  mapPoints.value = []
+
+  routeTitle.value = ''
+  routeAbout.value = ''
+  pleinairs.value = []
+  equipment.value = []
+  routeSummary.value = ''
+1
 
   if (Number(days.value) > 7) {
     result.value = 'Пока доступна генерация маршрутов до 7 дней'

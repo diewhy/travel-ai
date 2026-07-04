@@ -195,6 +195,7 @@ async function generateRoute() {
     history.value = response.history || ''
     memoryPlaces.value = response.memoryPlaces || []
     mapPoints.value = response.mapPoints || []
+    console.log('MAP POINTS:', mapPoints.value)
     routeTitle.value = response.title || ''
     routeAbout.value = response.about || ''
     pleinairs.value = response.pleinairs || []
@@ -500,7 +501,6 @@ function downloadPdf() {
     <div class="route-stats">
       <span>📅 {{ routeDurationName }}</span>
       <span>💰 {{ budget || '—' }} ₽</span>
-      <span>🧭 {{ travelType }}</span>
     </div>
   </div>
 

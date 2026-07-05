@@ -109,59 +109,66 @@ function drawPoints() {
   const sourcePoints =
     Array.isArray(props.points) && props.points.length
       ? props.points
-      : [props.place]
+      : []
 
-  const referencePoints = sourcePoints
+  const preparedPoints = sourcePoints
     .map((point) => {
-      // Готовая точка с координатами
+      // Точка с готовыми координатами
       if (
         point &&
         typeof point === 'object' &&
         Array.isArray(point.coords) &&
         point.coords.length === 2
       ) {
-        return point.coords
+        return {
+          name: point.name || 'Точка маршрута',
+          coords: point.coords
+        }
       }
 
-      // Точка в виде названия
-      const rawName =
-        typeof point === 'string'
-          ? point.trim()
-          : String(point?.name || '').trim()
+      // Точка в виде строки
+      if (typeof point === 'string') {
+        const rawName = point.trim()
 
-      if (!rawName) return null
+        if (!rawName) return null
 
-      const placeName = String(props.place || '').trim()
-
-      if (
-        placeName &&
-        !rawName
-          .toLowerCase()
-          .includes(placeName.toLowerCase())
-      ) {
-        return `${rawName}, ${placeName}`
+        return {
+          name: rawName,
+          coords: rawName
+        }
       }
 
-      return rawName
+      return null
     })
     .filter(Boolean)
 
-  if (!referencePoints.length) return
+  if (!preparedPoints.length) return
 
-  // Если точка одна — показываем обычный маркер
+  const referencePoints = preparedPoints.map(
+    (point) => point.coords
+  )
+
+  // Если точка одна
   if (referencePoints.length === 1) {
     const placemark = new window.ymaps.Placemark(
-      referencePoints[0]
+      referencePoints[0],
+      {
+        iconContent: '1',
+        balloonContent: preparedPoints[0].name,
+        hintContent: preparedPoints[0].name
+      },
+      {
+        preset: 'islands#blueCircleIcon'
+      }
     )
 
     map.geoObjects.add(placemark)
-
     map.setCenter(referencePoints[0], 15)
 
     return
   }
 
-  // Настоящий маршрут по дорогам или тротуарам
+  // Настоящий маршрут по дорогам или пешеходным дорожкам
   const multiRoute =
     new window.ymaps.multiRouter.MultiRoute(
       {
@@ -175,11 +182,44 @@ function drawPoints() {
         }
       },
       {
-        boundsAutoApply: true
+        boundsAutoApply: true,
+
+        // Скрываем стандартные точки маршрутизатора,
+        // потому что ниже добавим свои пронумерованные точки
+        wayPointVisible: false,
+        viaPointVisible: false,
+
+        routeActiveStrokeWidth: 6,
+        routeActiveStrokeColor: '#2563eb',
+        routeStrokeWidth: 4
       }
     )
 
   map.geoObjects.add(multiRoute)
+
+  // Добавляем пронумерованные маркеры поверх маршрута
+  preparedPoints.forEach((point, index) => {
+    // Для строковых адресов стандартный Placemark не подходит,
+    // поэтому маркируем здесь только точки с координатами
+    if (!Array.isArray(point.coords)) return
+
+    const placemark = new window.ymaps.Placemark(
+      point.coords,
+      {
+        iconContent: String(index + 1),
+        balloonContent: `
+          <strong>${index + 1}. ${point.name}</strong>
+        `,
+        hintContent: `${index + 1}. ${point.name}`
+      },
+      {
+        preset: 'islands#blueCircleIcon',
+        zIndex: 1000
+      }
+    )
+
+    map.geoObjects.add(placemark)
+  })
 }
 
 watch(

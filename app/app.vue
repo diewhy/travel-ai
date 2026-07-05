@@ -401,7 +401,7 @@ function downloadPdf() {
     </div>
   </div>
 
-  <button @click="openReadyMoscowRoute">Открыть готовый маршрут по Москве "Москва. Дорогами памяти"</button>
+  <button type="button" class="ready-route-btn" @click="openReadyMoscowRoute">Открыть готовый маршрут по Москве "Москва. Дорогами памяти"</button>
   
 </div>
 </Transition>

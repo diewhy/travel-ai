@@ -19,6 +19,7 @@ const routeAbout = ref('')
 const pleinairs = ref([])
 const equipment = ref([])
 const routeSummary = ref('')
+const mapTravelMode = ref ('pedestrian')
 const formattedResult = computed(() => {
   const text = typeof result.value === 'string'
     ? result.value
@@ -309,14 +310,16 @@ async function openReadyMoscowRoute(routeId) {
   const route = readyMoscowRoutes.find(
     (item) => item.id === routeId
   )
-
-  if (!route) return
-
   showPlanner.value = false
   routeMode.value = 'history'
   routeDuration.value = route.durationValue
   place.value = 'Москва'
   days.value = route.days
+  mapTravelMode.value =
+    route.id === 'long'
+    ? 'auto'
+    : 'pedestrian'
+  if (!route) return
   budget.value = ''
   activeImageIndex.value = 0
 
@@ -839,13 +842,36 @@ function downloadPdf() {
   </button>
 </section>
 
+<div
+  v-if="result && mapPoints.length"
+  class="map-travel-switch"
+>
+  <button
+    type="button"
+    class="map-travel-btn"
+    :class="{ active: mapTravelMode === 'pedestrian' }"
+    @click="mapTravelMode = 'pedestrian'"
+  >
+    🚶  Пешком
+  </button>
+
+  <button
+    type="button"
+    class="map-travel-btn"
+    :class="{ active: mapTravelMode === 'auto' }"
+    @click="mapTravelMode = 'auto'"
+  >
+    🚗  На машине
+  </button>
+</div>
+
 <YandexMap
   v-if="result && mapPoints.length"
   :key="routeTitle + '-' + mapPoints.length"
   :place="place"
   :points="mapPoints"
-> 
-</YandexMap>
+  :travel-mode="mapTravelMode"
+/>
 
 <section
   v-if="savedRoutes.length"
@@ -1762,5 +1788,33 @@ button:hover {
   .ready-routes-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.map-travel-switch {
+  width: min(100%, 1180px);
+  margin: 30px auto 14px;
+  padding: 8px;
+  display: flex;
+  gap: 8px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(18px);
+}
+
+.map-travel-btn {
+  margin: 0;
+  padding: 13px 18px;
+  background: transparent;
+  box-shadow: none;
+  font-size: 15px;
+}
+
+.map-travel-btn:hover {
+  box-shadow: none;
+}
+
+.map-travel-btn.active {
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
 }
 </style>

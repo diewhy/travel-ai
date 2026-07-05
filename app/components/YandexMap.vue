@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, watch, ref } from 'vue'
+import { onMounted, watch, ref, onBeforeMount} from 'vue'
 
 const props = defineProps({
   place: {
@@ -9,6 +9,10 @@ const props = defineProps({
   points: {
     type: Array,
     default: () => []
+  },
+  travelMode: {
+    type: String,
+    default: 'pedestrian'
   }
 })
 
@@ -97,7 +101,7 @@ const knownCoords = {
   'музей-панорама бородинская битва': [55.7387, 37.5236]
 }
 
-async function drawPoints() {
+function drawPoints() {
   if (!map || !window.ymaps) return
 
   map.geoObjects.removeAll()
@@ -107,8 +111,8 @@ async function drawPoints() {
       ? props.points
       : [props.place]
 
-  const resolvedPoints = await Promise.all(
-    sourcePoints.map(async (point) => {
+  const referencePoints = sourcePoints
+    .map((point) => {
       // Готовая точка с координатами
       if (
         point &&
@@ -116,98 +120,81 @@ async function drawPoints() {
         Array.isArray(point.coords) &&
         point.coords.length === 2
       ) {
-        return {
-          name: point.name || 'Точка маршрута',
-          coords: point.coords
-        }
+        return point.coords
       }
 
-      // Точка, полученная от ИИ в виде строки
-      const rawName = String(point || '').trim()
+      // Точка в виде названия
+      const rawName =
+        typeof point === 'string'
+          ? point.trim()
+          : String(point?.name || '').trim()
 
       if (!rawName) return null
 
       const placeName = String(props.place || '').trim()
 
-      const pointName =
+      if (
         placeName &&
-        !rawName.toLowerCase().includes(placeName.toLowerCase())
-          ? `${rawName}, ${placeName}`
-          : rawName
-
-      try {
-        const response = await window.ymaps.geocode(pointName)
-        const geoObject = response.geoObjects.get(0)
-
-        if (!geoObject) {
-          console.warn('Точка не найдена:', pointName)
-          return null
-        }
-
-        return {
-          name: rawName,
-          coords: geoObject.geometry.getCoordinates()
-        }
-      } catch (error) {
-        console.warn('Ошибка геокодинга:', pointName, error)
-        return null
+        !rawName
+          .toLowerCase()
+          .includes(placeName.toLowerCase())
+      ) {
+        return `${rawName}, ${placeName}`
       }
+
+      return rawName
     })
-  )
+    .filter(Boolean)
 
-  const validPoints = resolvedPoints.filter(Boolean)
+  if (!referencePoints.length) return
 
-  console.log('Точки, отображённые на карте:', validPoints)
-
-  validPoints.forEach((point) => {
+  // Если точка одна — показываем обычный маркер
+  if (referencePoints.length === 1) {
     const placemark = new window.ymaps.Placemark(
-      point.coords,
-      {
-        balloonContent: point.name,
-        hintContent: point.name
-      },
-      {
-        preset: 'islands#blueIcon'
-      }
+      referencePoints[0]
     )
 
     map.geoObjects.add(placemark)
-  })
 
-  if (validPoints.length > 1) {
-    const routeLine = new window.ymaps.Polyline(
-      validPoints.map((point) => point.coords),
-      {},
+    map.setCenter(referencePoints[0], 15)
+
+    return
+  }
+
+  // Настоящий маршрут по дорогам или тротуарам
+  const multiRoute =
+    new window.ymaps.multiRouter.MultiRoute(
       {
-        strokeColor: '#00bfff',
-        strokeWidth: 5,
-        strokeOpacity: 0.9
+        referencePoints,
+
+        params: {
+          routingMode:
+            props.travelMode === 'auto'
+              ? 'auto'
+              : 'pedestrian'
+        }
+      },
+      {
+        boundsAutoApply: true
       }
     )
 
-    map.geoObjects.add(routeLine)
-  }
-
-  if (validPoints.length) {
-    const bounds = map.geoObjects.getBounds()
-
-    if (bounds) {
-      map.setBounds(bounds, {
-        checkZoomRange: true,
-        zoomMargin: 70
-      })
-    }
-  }
+  map.geoObjects.add(multiRoute)
 }
 
 watch(
-  () => props.points,
+  [
+    () => props.points,
+    () => props.travelMode
+  ],
   () => {
     if (map) {
-      drawPoints ()
+      drawPoints()
     }
   },
-  { deep: true }
+  {
+    deep: true
+  }
 )
 
 function updateMap() {

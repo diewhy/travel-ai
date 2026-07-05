@@ -109,7 +109,36 @@ function drawPoints() {
     : [props.place]
 
   const geocodePromises = points.map((point) => {
-    const rawName = String(point).trim()
+    if (
+  typeof point === 'object' &&
+  point !== null &&
+  Array.isArray(point.coords)
+) {
+  const pointName = point.name || 'Точка маршрута'
+  const coords = point.coords
+
+  coordsList.push({
+    name: pointName,
+    coords
+  })
+
+  const placemark = new window.ymaps.Placemark(
+    coords,
+    {
+      balloonContent: pointName,
+      hintContent: pointName
+    }
+  )
+
+  map.geoObjects.add(placemark)
+
+  return Promise.resolve(coords)
+}
+
+    const rawName = 
+      typeof point === 'string'
+      ? point.trim()
+      : String(point?.name || '').trim()
 
     const key = rawName.toLowerCase()
 

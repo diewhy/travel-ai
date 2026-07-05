@@ -3,6 +3,7 @@ vue
 import {ref, computed, nextTick, onMounted, onBeforeUnmount} from 'vue'
 import YandexMap from '~/components/YandexMap.vue'
 import { cities } from '../data/cities.js'
+import { readyMoscowRoutePoints } from '../data/readyRoutes.js'
 
 const place = ref('')
 const days = ref('')
@@ -65,6 +66,7 @@ let galleryTimer = null
 
 function openReadyMoscowRoute() {
   routeMode.value = 'history'
+  routeDuration.value = 
   place.value = 'Москва'
   days.value = '1'
   budget.value = '0'
@@ -81,13 +83,10 @@ function openReadyMoscowRoute() {
     'Красная площадь'
   ]
 
-  mapPoints.value = [
-    'Александровский сад, Москва',
-    'Могила Неизвестного Солдата, Москва',
-    'Вечный огонь, Александровский сад, Москва',
-    'Манежная площадь, Москва',
-    'Красная площадь, Москва'
-  ]
+  mapPoints.value = readyMoscowRoutePoints.map((point) =>({
+    ...point,
+    coords: [...point.coords]
+  }))
 
   result.value = `**Москва. Дорогами памяти**
 
@@ -202,7 +201,6 @@ async function generateRoute() {
     history.value = response.history || ''
     memoryPlaces.value = response.memoryPlaces || []
     mapPoints.value = response.mapPoints || []
-    console.log('MAP POINTS:', mapPoints.value)
     routeTitle.value = response.title || ''
     routeAbout.value = response.about || ''
     pleinairs.value = response.pleinairs || []
@@ -279,6 +277,29 @@ function deleteSavedRoute(index) {
     JSON.stringify(savedRoutes.value)
   )
 }
+
+const readyMoscowRoutePoints = [
+  {
+    name: 'Александровский сад',
+    coords: [55.7521, 37.6137]
+  },
+  {
+    name: 'Могила Неизвестного Солдата',
+    coords: [55.7540, 37.6131]
+  },
+  {
+    name: 'Вечный огонь',
+    coords: [55.7540, 37.6131]
+  },
+  {
+    name: 'Манежная площадь',
+    coords: [55.7552, 37.6156]
+  },
+  {
+    name: 'Красная площадь',
+    coords: [55.7539, 37.6208]
+  }
+]
 
 function downloadPdf() {
   const printWindow = window.open('', '_blank')
@@ -637,10 +658,20 @@ function downloadPdf() {
   box-sizing: border-box;
 }
 
-body {
+html,
+body,
+#__nuxt {
   margin: 0;
+  min-height: 100%;
+  background:
+    url('/fonosn.png')
+    center top / cover
+    no-repeat
+    fixed !important;
+}
+
+body {
   font-family: 'Manrope', Arial, sans-serif;
-  min-height: 100 vh;
 }
 
 .page {
@@ -648,13 +679,9 @@ body {
   padding: 28px;
   color: white;
   position: relative;
-  overflow: hidden;
   isolation: isolate;
-  background-image: url ('/fonosn.jpg');
-  background-size: cover;
-  background-position: center top;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  overflow-x: hidden;
+  background: transparent !important;
 }
 
 .planner-card,

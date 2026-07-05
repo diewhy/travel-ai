@@ -97,131 +97,119 @@ const knownCoords = {
   'музей-панорама бородинская битва': [55.7387, 37.5236]
 }
 
-function drawPoints() {
+async function drawPoints() {
   if (!map || !window.ymaps) return
 
   map.geoObjects.removeAll()
 
-  const coordsList = []
+  const sourcePoints =
+    Array.isArray(props.points) && props.points.length
+      ? props.points
+      : [props.place]
 
-  const points = props.points?.length
-    ? props.points
-    : [props.place]
+  const resolvedPoints = await Promise.all(
+    sourcePoints.map(async (point) => {
+      // Готовая точка с координатами
+      if (
+        point &&
+        typeof point === 'object' &&
+        Array.isArray(point.coords) &&
+        point.coords.length === 2
+      ) {
+        return {
+          name: point.name || 'Точка маршрута',
+          coords: point.coords
+        }
+      }
 
-  const geocodePromises = points.map((point) => {
-    if (
-  typeof point === 'object' &&
-  point !== null &&
-  Array.isArray(point.coords)
-) {
-  const pointName = point.name || 'Точка маршрута'
-  const coords = point.coords
+      // Точка, полученная от ИИ в виде строки
+      const rawName = String(point || '').trim()
 
-  coordsList.push({
-    name: pointName,
-    coords
-  })
+      if (!rawName) return null
 
-  const placemark = new window.ymaps.Placemark(
-    coords,
-    {
-      balloonContent: pointName,
-      hintContent: pointName
-    }
+      const placeName = String(props.place || '').trim()
+
+      const pointName =
+        placeName &&
+        !rawName.toLowerCase().includes(placeName.toLowerCase())
+          ? `${rawName}, ${placeName}`
+          : rawName
+
+      try {
+        const response = await window.ymaps.geocode(pointName)
+        const geoObject = response.geoObjects.get(0)
+
+        if (!geoObject) {
+          console.warn('Точка не найдена:', pointName)
+          return null
+        }
+
+        return {
+          name: rawName,
+          coords: geoObject.geometry.getCoordinates()
+        }
+      } catch (error) {
+        console.warn('Ошибка геокодинга:', pointName, error)
+        return null
+      }
+    })
   )
 
-  map.geoObjects.add(placemark)
+  const validPoints = resolvedPoints.filter(Boolean)
 
-  return Promise.resolve(coords)
-}
+  console.log('Точки, отображённые на карте:', validPoints)
 
-    const rawName = 
-      typeof point === 'string'
-      ? point.trim()
-      : String(point?.name || '').trim()
-
-    const key = rawName.toLowerCase()
-
-const matchedKey = Object.keys(knownCoords).find((name) =>
-  key.includes(name) || name.includes(key)
-)
-
-if (matchedKey) {
-  const coords = knownCoords[matchedKey]
-
-  coordsList.push({
-    name: rawName,
-    coords
-  })
-
-  const placemark = new window.ymaps.Placemark(coords, {
-    balloonContent: rawName,
-    hintContent: rawName
-  })
-
-  map.geoObjects.add(placemark)
-
-  return Promise.resolve(coords)
-}
-
-    const pointName = rawName.toLowerCase().includes('москва') ||
-      rawName.toLowerCase().includes(String(props.place).toLowerCase())
-      ? rawName
-      : `${rawName}, ${props.place}`
-    return window.ymaps.geocode(pointName)
-  .then((res) => {
-    const firstGeoObject = res.geoObjects.get(0)
-
-    if (!firstGeoObject) {
-      console.warn('Не найдено:', pointName)
-      return
-    }
-
-    const coords = firstGeoObject.geometry.getCoordinates()
-    console.log('POINT:', pointName, coords)
-
-    coordsList.push({
-      name: pointName,
-      coords
-    })
-
-    const placemark = new window.ymaps.Placemark(coords, {
-      balloonContent: pointName,
-      hintContent: pointName
-    })
+  validPoints.forEach((point) => {
+    const placemark = new window.ymaps.Placemark(
+      point.coords,
+      {
+        balloonContent: point.name,
+        hintContent: point.name
+      },
+      {
+        preset: 'islands#blueIcon'
+      }
+    )
 
     map.geoObjects.add(placemark)
   })
-  .catch((error) => {
-    console.warn('Ошибка геокодинга:', pointName, error)
-  })
-  })
 
-  Promise.all(geocodePromises).then(() => {
-    if (coordsList.length > 1) {
-      const line = new window.ymaps.Polyline(
-        coordsList.map((item) => item.coords),
-        {},
-        {
-          strokeColor: '#00bfff',
-          strokeWidth: 5,
-          strokeOpacity: 0.9
-        }
-      )
+  if (validPoints.length > 1) {
+    const routeLine = new window.ymaps.Polyline(
+      validPoints.map((point) => point.coords),
+      {},
+      {
+        strokeColor: '#00bfff',
+        strokeWidth: 5,
+        strokeOpacity: 0.9
+      }
+    )
 
-      map.geoObjects.add(line)
-    }
+    map.geoObjects.add(routeLine)
+  }
 
+  if (validPoints.length) {
     const bounds = map.geoObjects.getBounds()
 
     if (bounds) {
       map.setBounds(bounds, {
         checkZoomRange: true,
-        zoomMargin: 60
+        zoomMargin: 70
       })
     }
-  })
+  }
 }
+
+watch(
+  () => props.points,
+  () => {
+    if (map) {
+      drawPoints ()
+    }
+  },
+  { deep: true }
+)
+
 function updateMap() {
   if (!map) return
 

@@ -1,9 +1,8 @@
 vue
 <script setup> 
-import {ref, computed, nextTick, onMounted, onBeforeUnmount} from 'vue'
+import {ref, computed, nextTick, onMounted, onBeforeUnmount, watch} from 'vue'
 import YandexMap from '~/components/YandexMap.vue'
 import { cities } from '../data/cities.js'
-import { readyMoscowRoutePoints } from '../data/readyRoutes.js'
 
 const place = ref('')
 const days = ref('')
@@ -113,34 +112,41 @@ async function openReadyMoscowRoute() {
 **Формат**
 Пеший маршрут для школьников, студентов, туристов и участников патриотических мероприятий.`
 
+mapPoints.value = [
+  {
+    name: 'Александровский сад',
+    coords: [55.7526, 37.6127]
+  },
+  {
+    name: 'Могила Неизвестного Солдата',
+    coords: [55.7538, 37.6132]
+  },
+  {
+    name: 'Вечный огонь',
+    coords: [55.7541, 37.6134]
+  },
+  {
+    name: 'Пост №1',
+    coords: [55.7543, 37.6136]
+  },
+  {
+    name: 'Манежная площадь',
+    coords: [55.7553, 37.6155]
+  },
+  {
+    name: 'Красная площадь',
+    coords: [55.7539, 37.6208]
+  }
+]
+
+console.log('Точки готового маршрута:', mapPoints.value)
+
   await nextTick()
 
   document.querySelector('.result-wrap')?.scrollIntoView({
     behavior: 'smooth',
     block: 'start'
   })
-
-  // Затем отдельно загружаем точки карты
-  try {
-    mapPoints.value = Array.isArray(readyMoscowRoutePoints)
-      ? readyMoscowRoutePoints
-          .filter(
-            (point) =>
-              point &&
-              Array.isArray(point.coords) &&
-              point.coords.length === 2
-          )
-          .map((point) => ({
-            name: point.name || 'Точка маршрута',
-            coords: [...point.coords]
-          }))
-      : []
-
-    console.log('Точки готового маршрута:', mapPoints.value)
-  } catch (error) {
-    console.error('Ошибка готовых точек:', error)
-    mapPoints.value = []
-  }
 }
 
 function startGalleryAutoplay () {
@@ -611,6 +617,10 @@ function downloadPdf() {
     📄 Скачать PDF
   </button>
 </section>
+
+<div style="color: white; text-align: center; font-size: 22px;">
+  Точек для карты: {{ mapPoints.length }}
+</div>
 
 <YandexMap
   v-if="result && mapPoints.length"

@@ -70,6 +70,17 @@ async function initMap() {
   })
 }
 
+const knownCoords = {
+  'музей победы на поклонной горе': [55.7309, 37.5066],
+  'парк победы': [55.7353, 37.5186],
+  'александровский сад': [55.7521, 37.6137],
+  'могила неизвестного солдата': [55.7540, 37.6131],
+  'вечный огонь': [55.7540, 37.6131],
+  'красная площадь': [55.7539, 37.6208],
+  'манежная площадь': [55.7552, 37.6156],
+  'государственный исторический музей': [55.7554, 37.6178]
+}
+
 function drawPoints() {
   if (!map || !window.ymaps) return
 
@@ -83,6 +94,26 @@ function drawPoints() {
 
   const geocodePromises = points.map((point) => {
     const rawName = String(point).trim()
+
+    const key = rawName.toLowerCase()
+
+if (knownCoords[key]) {
+  const coords = knownCoords[key]
+
+  coordsList.push({
+    name: rawName,
+    coords
+  })
+
+  const placemark = new window.ymaps.Placemark(coords, {
+    balloonContent: rawName,
+    hintContent: rawName
+  })
+
+  map.geoObjects.add(placemark)
+
+  return Promise.resolve(coords)
+}
 
     const pointName = rawName.toLowerCase().includes('москва') ||
       rawName.toLowerCase().includes(String(props.place).toLowerCase())
@@ -146,7 +177,7 @@ function updateMap() {
   if (!map) return
 
   const center = centers[props.place] || centers['Алтай']
-
+  
   map.setCenter(center, 8, { duration: 600 })
   drawPoints()
 

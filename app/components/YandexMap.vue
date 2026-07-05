@@ -101,7 +101,7 @@ const knownCoords = {
   'музей-панорама бородинская битва': [55.7387, 37.5236]
 }
 
-function drawPoints() {
+async function drawPoints() {
   if (!map || !window.ymaps) return
 
   map.geoObjects.removeAll()
@@ -111,9 +111,9 @@ function drawPoints() {
       ? props.points
       : []
 
-  const preparedPoints = sourcePoints
-    .map((point) => {
-      // Точка с готовыми координатами
+  const resolvedPoints = await Promise.all(
+    sourcePoints.map(async (point) => {
+      // Точка уже содержит координаты
       if (
         point &&
         typeof point === 'object' &&
@@ -126,91 +126,51 @@ function drawPoints() {
         }
       }
 
-      // Точка в виде строки
-      if (typeof point === 'string') {
-        const rawName = point.trim()
+      // Точка пришла в виде названия
+      const rawName =
+        typeof point === 'string'
+          ? point.trim()
+          : String(point?.name || '').trim()
 
-        if (!rawName) return null
+      if (!rawName) return null
+
+      const placeName = String(props.place || '').trim()
+
+      const searchName =
+        placeName &&
+        !rawName.toLowerCase().includes(placeName.toLowerCase())
+          ? `${rawName}, ${placeName}`
+          : rawName
+
+      try {
+        const response = await window.ymaps.geocode(searchName)
+        const geoObject = response.geoObjects.get(0)
+
+        if (!geoObject) return null
 
         return {
           name: rawName,
-          coords: rawName
+          coords: geoObject.geometry.getCoordinates()
         }
+      } catch (error) {
+        console.warn('Не удалось найти точку:', searchName, error)
+        return null
       }
-
-      return null
     })
-    .filter(Boolean)
-
-  if (!preparedPoints.length) return
-
-  const referencePoints = preparedPoints.map(
-    (point) => point.coords
   )
 
-  // Если точка одна
-  if (referencePoints.length === 1) {
-    const placemark = new window.ymaps.Placemark(
-      referencePoints[0],
-      {
-        iconContent: '1',
-        balloonContent: preparedPoints[0].name,
-        hintContent: preparedPoints[0].name
-      },
-      {
-        preset: 'islands#blueCircleIcon'
-      }
-    )
+  const validPoints = resolvedPoints.filter(Boolean)
 
-    map.geoObjects.add(placemark)
-    map.setCenter(referencePoints[0], 15)
+  if (!validPoints.length) return
 
-    return
-  }
-
-  // Настоящий маршрут по дорогам или пешеходным дорожкам
-  const multiRoute =
-    new window.ymaps.multiRouter.MultiRoute(
-      {
-        referencePoints,
-
-        params: {
-          routingMode:
-            props.travelMode === 'auto'
-              ? 'auto'
-              : 'pedestrian'
-        }
-      },
-      {
-        boundsAutoApply: true,
-
-        // Скрываем стандартные точки маршрутизатора,
-        // потому что ниже добавим свои пронумерованные точки
-        wayPointVisible: false,
-        viaPointVisible: false,
-
-        routeActiveStrokeWidth: 6,
-        routeActiveStrokeColor: '#2563eb',
-        routeStrokeWidth: 4
-      }
-    )
-
-  map.geoObjects.add(multiRoute)
-
-  // Добавляем пронумерованные маркеры поверх маршрута
-  preparedPoints.forEach((point, index) => {
-    // Для строковых адресов стандартный Placemark не подходит,
-    // поэтому маркируем здесь только точки с координатами
-    if (!Array.isArray(point.coords)) return
-
+  // Пронумерованные точки
+  validPoints.forEach((point, index) => {
     const placemark = new window.ymaps.Placemark(
       point.coords,
       {
         iconContent: String(index + 1),
-        balloonContent: `
-          <strong>${index + 1}. ${point.name}</strong>
-        `,
-        hintContent: `${index + 1}. ${point.name}`
+        hintContent: `${index + 1}. ${point.name}`,
+        balloonContent: `<strong>${index + 1}. ${point.name}</strong>`
       },
       {
         preset: 'islands#blueCircleIcon',
@@ -220,12 +180,37 @@ function drawPoints() {
 
     map.geoObjects.add(placemark)
   })
+
+  // Прямая линия между точками
+  if (validPoints.length > 1) {
+    const routeLine = new window.ymaps.Polyline(
+      validPoints.map((point) => point.coords),
+      {},
+      {
+        strokeColor: '#0284c7',
+        strokeWidth: 6,
+        strokeOpacity: 0.9
+      }
+    )
+
+    map.geoObjects.add(routeLine)
+  }
+
+  const bounds = map.geoObjects.getBounds()
+
+  if (bounds) {
+    map.setBounds(bounds, {
+      checkZoomRange: true,
+      zoomMargin: 70
+    })
+  }
 }
+
 
 watch(
   [
     () => props.points,
-    () => props.travelMode
+    () => props.place
   ],
   () => {
     if (map) {

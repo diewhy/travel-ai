@@ -143,7 +143,7 @@ const readyMoscowRoutes = [
     duration: '6–8 часов',
     durationValue: 'day',
     days: '1',
-    title: 'Москва военная',
+    title: 'Героическая Москва',
     preview: 'Полноценный маршрут на день с мемориалами и военно-историческим музеем.',
 
     history:
@@ -842,35 +842,11 @@ function downloadPdf() {
   </button>
 </section>
 
-<div
-  v-if="result && mapPoints.length"
-  class="map-travel-switch"
->
-  <button
-    type="button"
-    class="map-travel-btn"
-    :class="{ active: mapTravelMode === 'pedestrian' }"
-    @click="mapTravelMode = 'pedestrian'"
-  >
-    🚶  Пешком
-  </button>
-
-  <button
-    type="button"
-    class="map-travel-btn"
-    :class="{ active: mapTravelMode === 'auto' }"
-    @click="mapTravelMode = 'auto'"
-  >
-    🚗  На машине
-  </button>
-</div>
-
 <YandexMap
   v-if="result && mapPoints.length"
   :key="routeTitle + '-' + mapPoints.length"
   :place="place"
   :points="mapPoints"
-  :travel-mode="mapTravelMode"
 />
 
 <section

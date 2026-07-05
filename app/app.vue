@@ -116,6 +116,7 @@ function openReadyMoscowRoute() {
 
 **Рекомендация**
 Лучше проходить маршрут в первой половине дня или вечером, когда меньше туристических групп.`
+}
 
 function startGalleryAutoplay () {
   stopGalleryAutoplay ()

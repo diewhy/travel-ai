@@ -278,29 +278,6 @@ function deleteSavedRoute(index) {
   )
 }
 
-const readyMoscowRoutePoints = [
-  {
-    name: 'Александровский сад',
-    coords: [55.7521, 37.6137]
-  },
-  {
-    name: 'Могила Неизвестного Солдата',
-    coords: [55.7540, 37.6131]
-  },
-  {
-    name: 'Вечный огонь',
-    coords: [55.7540, 37.6131]
-  },
-  {
-    name: 'Манежная площадь',
-    coords: [55.7552, 37.6156]
-  },
-  {
-    name: 'Красная площадь',
-    coords: [55.7539, 37.6208]
-  }
-]
-
 function downloadPdf() {
   const printWindow = window.open('', '_blank')
 

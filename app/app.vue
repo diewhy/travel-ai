@@ -12,6 +12,12 @@ const travelType = ref('Активный')
 const savedRoutes = ref([])
 const result = ref ('')
 const mapPoints = ref([])
+const routeStops = ref([])
+const activeStop = ref(null)
+const availableVoices = ref([])
+let audioPauseTimer = null
+const visitedStopIds = ref([])
+const currentReadyRouteId = ref('')
 const history = ref('')
 const memoryPlaces = ref([])
 const routeTitle = ref('')
@@ -306,22 +312,64 @@ const readyMoscowRoutes = [
   }
 ]
 
+const moscowStopContent = {
+  'Александровский сад': {
+  description:
+    'Исторический сад у стен Московского Кремля и начало мемориальной части маршрута.',
+  task:
+    'Найдите вход в мемориальную зону и определите, какие элементы объединяют её с Кремлёвской стеной.',
+  audio:
+    'Вы находитесь в Александровском саду — одном из самых известных исторических пространств Москвы. Сад появился у стен Кремля после восстановления города в XIX веке и со временем стал не только местом прогулок, но и важной частью мемориального пространства столицы. Именно отсюда начинается маршрут памяти. Обратите внимание на расположение сада: он проходит вдоль Кремлёвской стены, рядом с главными государственными символами страны. Сегодня эта точка помогает почувствовать связь между историей Москвы, памятью о войнах и современными государственными церемониями. Осмотрите пространство вокруг и найдите вход в мемориальную зону.'
+},
+
+'Могила Неизвестного Солдата': {
+  description:
+    'Один из главных мемориалов воинской славы России, посвящённый погибшим защитникам Отечества.',
+  task:
+    'Найдите главную надпись мемориала и прочитайте её полностью.',
+  audio:
+    'Перед вами Могила Неизвестного Солдата — один из главных символов воинской памяти России. Мемориал посвящён всем защитникам Отечества, чьи имена остались неизвестными, но чей подвиг стал частью общей истории страны. Здесь важно не просто пройти мимо, а остановиться на несколько минут. Обратите внимание на строгость композиции, гранит, бронзовые элементы и главную надпись: Имя твоё неизвестно, подвиг твой бессмертен. Эта фраза стала одним из самых узнаваемых символов памяти о Великой Отечественной войне. Найдите надпись и прочитайте её полностью.'
+},
+
+'Вечный огонь': {
+  description:
+    'Центральный символ непрерывной памяти о воинах, погибших при защите страны.',
+  task:
+    'Рассмотрите бронзовую звезду и сделайте фотографию мемориала, не мешая церемониям.',
+  audio:
+    'Вечный огонь — это символ памяти, которая не должна прерываться. Он горит в честь воинов, погибших при защите страны, и напоминает о цене Победы. Здесь особенно важно соблюдать тишину и уважение к месту. Обратите внимание на бронзовую звезду, из центра которой выходит пламя. Вокруг этого объекта проходят официальные церемонии, возложения цветов и смена почётного караула. Для посетителя эта точка маршрута становится главным моментом остановки и осмысления. Рассмотрите мемориал и сделайте фотографию так, чтобы не мешать другим людям и церемониям.'
+},
+
+'Пост №1': {
+  description:
+    'Почётный караул у мемориала, который несут военнослужащие Президентского полка.',
+  task:
+    'Понаблюдайте за караулом и обратите внимание на церемониальный порядок действий.',
+  audio:
+    'Пост номер один — это почётный караул у Вечного огня. Его несут военнослужащие Президентского полка. Для многих посетителей именно смена караула становится самым запоминающимся моментом маршрута. Здесь важны точность движений, выправка, синхронность и торжественный ритм церемонии. Пост подчёркивает государственное значение мемориала и показывает, что память о погибших защитниках Отечества сохраняется не только в памятниках, но и в живой традиции. Понаблюдайте за караулом и обратите внимание на порядок действий.'
+}
+}
+
 async function openReadyMoscowRoute(routeId) {
   const route = readyMoscowRoutes.find(
     (item) => item.id === routeId
   )
+
+  if (!route) {
+    console.warn('Маршрут не найден:', routeId)
+    return
+  }
+
   showPlanner.value = false
   routeMode.value = 'history'
   routeDuration.value = route.durationValue
   place.value = 'Москва'
   days.value = route.days
-  mapTravelMode.value =
-    route.id === 'long'
-    ? 'auto'
-    : 'pedestrian'
-  if (!route) return
   budget.value = ''
   activeImageIndex.value = 0
+
+  currentReadyRouteId.value = route.id
+  activeStop.value = null
 
   routeTitle.value = route.title
   history.value = route.history
@@ -331,16 +379,33 @@ async function openReadyMoscowRoute(routeId) {
   equipment.value = []
   routeSummary.value = ''
 
-  mapPoints.value = route.mapPoints.map((point) => {
-    if (typeof point === 'string') {
-      return point
-    }
+  routeStops.value = route.mapPoints.map((point, index) => {
+    const content =
+      moscowStopContent[point.name] || {
+        description:
+          'Памятное место, включённое в военно-исторический маршрут по Москве.',
+        task:
+          'Осмотрите объект и отметьте деталь, которая показалась наиболее значимой.'
+      }
 
     return {
-      ...point,
-      coords: [...point.coords]
-    }
+  ...point,
+  id: `${route.id}-${index}`,
+  number: index + 1,
+  description: content.description,
+  task: content.task,
+  audio:
+    content.audio ||
+    `${point.name}. ${content.description} Это одна из точек военно-исторического маршрута по Москве. Осмотрите объект внимательно, обратите внимание на детали памятника, мемориала или музейного пространства. После осмотра выполните задание: ${content.task}`
+}
   })
+
+  mapPoints.value = routeStops.value.map((stop) => ({
+    ...stop,
+    coords: [...stop.coords]
+  }))
+
+  loadRouteProgress(route.id)
 
   result.value = route.text
 
@@ -350,6 +415,153 @@ async function openReadyMoscowRoute(routeId) {
     behavior: 'smooth',
     block: 'start'
   })
+}
+
+function openRouteStop(stop) {
+  activeStop.value = stop
+}
+
+function closeRouteStop() {
+  activeStop.value = null
+
+  if (audioPauseTimer) {
+    clearTimeout(audioPauseTimer)
+    audioPauseTimer = null
+  }
+
+  if (
+    typeof window !== 'undefined' &&
+    window.speechSynthesis
+  ) {
+    window.speechSynthesis.cancel()
+  }
+}
+
+function isStopVisited(stopId) {
+  return visitedStopIds.value.includes(stopId)
+}
+
+function loadRouteProgress(routeId) {
+  try {
+    const saved = localStorage.getItem(
+      `route-progress-${routeId}`
+    )
+
+    visitedStopIds.value = saved
+      ? JSON.parse(saved)
+      : []
+  } catch {
+    visitedStopIds.value = []
+  }
+}
+
+function markStopVisited(stop) {
+  if (!visitedStopIds.value.includes(stop.id)) {
+    visitedStopIds.value.push(stop.id)
+  }
+
+  localStorage.setItem(
+    `route-progress-${currentReadyRouteId.value}`,
+    JSON.stringify(visitedStopIds.value)
+  )
+}
+
+function playStopAudio(stop) {
+  if (
+    typeof window === 'undefined' ||
+    !window.speechSynthesis
+  ) {
+    return
+  }
+
+  window.speechSynthesis.cancel()
+
+  if (audioPauseTimer) {
+    clearTimeout(audioPauseTimer)
+    audioPauseTimer = null
+  }
+
+  const text =
+    stop.audio ||
+    `${stop.name}. ${stop.description}`
+
+  const voice = getBestRussianVoice()
+
+  const parts = text
+    .replaceAll('—', '. ')
+    .split(/(?<=[.!?])\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+
+  let index = 0
+
+  function speakNextPart() {
+    if (index >= parts.length) return
+
+    const speech = new SpeechSynthesisUtterance(parts[index])
+
+    speech.lang = 'ru-RU'
+    speech.rate = 0.82
+    speech.pitch = 1.05
+    speech.volume = 1
+
+    if (voice) {
+      speech.voice = voice
+    }
+
+    speech.onend = () => {
+      index += 1
+
+      audioPauseTimer = setTimeout(() => {
+        speakNextPart()
+      }, 350)
+    }
+
+    window.speechSynthesis.speak(speech)
+  }
+
+  speakNextPart()
+}
+
+function loadSpeechVoices() {
+  if (
+    typeof window === 'undefined' ||
+    !window.speechSynthesis
+  ) {
+    return
+  }
+
+  availableVoices.value = window.speechSynthesis.getVoices()
+
+  window.speechSynthesis.onvoiceschanged = () => {
+    availableVoices.value = window.speechSynthesis.getVoices()
+  }
+}
+
+function getBestRussianVoice() {
+  const voices = availableVoices.value || []
+
+  return (
+    voices.find((voice) =>
+      voice.lang === 'ru-RU' &&
+      voice.name.toLowerCase().includes('milena')
+    ) ||
+    voices.find((voice) =>
+      voice.lang === 'ru-RU' &&
+      voice.name.toLowerCase().includes('google')
+    ) ||
+    voices.find((voice) =>
+      voice.lang === 'ru-RU' &&
+      voice.name.toLowerCase().includes('microsoft')
+    ) ||
+    voices.find((voice) =>
+      voice.lang === 'ru-RU'
+    ) ||
+    voices.find((voice) =>
+      voice.lang?.toLowerCase().startsWith('ru')
+    ) ||
+    null
+  )
 }
 
 function startGalleryAutoplay () {
@@ -372,6 +584,7 @@ function stopGalleryAutoplay() {
 onMounted(() => {
   startGalleryAutoplay()
   loadSavedRoutes()
+  loadSpeechVoices()
 })
 
 onBeforeUnmount(() => {
@@ -847,7 +1060,44 @@ function downloadPdf() {
   :key="routeTitle + '-' + mapPoints.length"
   :place="place"
   :points="mapPoints"
+  @select-point="openRouteStop"
 />
+
+<section
+  v-if="routeStops.length"
+  class="route-stops-section"
+>
+  <div class="route-stops-heading">
+    <div>
+      <span>Интерактивный маршрут</span>
+      <h2>Точки путешествия</h2>
+    </div>
+
+    <strong>
+      Пройдено:
+      {{ visitedStopIds.length }} / {{ routeStops.length }}
+    </strong>
+  </div>
+
+  <div class="route-stops-grid">
+    <article
+      v-for="stop in routeStops"
+      :key="stop.id"
+      class="route-stop-card"
+      :class="{ completed: isStopVisited(stop.id) }"
+      @click="openRouteStop(stop)"
+    >
+      <div class="route-stop-number">
+        {{ isStopVisited(stop.id) ? '✓' : stop.number }}
+      </div>
+
+      <div>
+        <h3>{{ stop.name }}</h3>
+        <p>{{ stop.description }}</p>
+      </div>
+    </article>
+  </div>
+</section>
 
 <section
   v-if="savedRoutes.length"
@@ -880,6 +1130,61 @@ function downloadPdf() {
   
   </div>
 </section>
+  <div
+  v-if="activeStop"
+  class="stop-modal-overlay"
+  @click.self="closeRouteStop"
+>
+  <article class="stop-modal">
+    <button
+      type="button"
+      class="stop-modal-close"
+      @click="closeRouteStop"
+    >
+      ×
+    </button>
+
+    <span class="stop-modal-label">
+      Точка {{ activeStop.number }} маршрута
+    </span>
+
+    <h2>{{ activeStop.name }}</h2>
+
+    <div class="stop-modal-block">
+      <h3>📖 Историческая справка</h3>
+      <p>{{ activeStop.description }}</p>
+    </div>
+
+    <div class="stop-modal-block">
+      <h3>🎯 Задание на точке</h3>
+      <p>{{ activeStop.task }}</p>
+    </div>
+
+    <button
+      type="button"
+      class="audio-guide-btn"
+      @click="playStopAudio(activeStop)"
+    >
+      🔊 Прослушать аудиогид
+    </button>
+
+    <button
+      v-if="!isStopVisited(activeStop.id)"
+      type="button"
+      class="visit-stop-btn"
+      @click="markStopVisited(activeStop)"
+    >
+      ✓ Я посетил эту точку
+    </button>
+
+    <div
+      v-else
+      class="stop-completed-message"
+    >
+      ✓ Точка пройдена
+    </div>
+  </article>
+</div>
   </div>
 </template>
 
@@ -1792,5 +2097,183 @@ button:hover {
 
 .map-travel-btn.active {
   background: linear-gradient(90deg, #2563eb, #06b6d4);
+}
+
+.route-stops-section {
+  width: min(100%, 1180px);
+  margin: 34px auto 0;
+  padding: 28px;
+  border-radius: 28px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.17);
+  backdrop-filter: blur(22px);
+}
+
+.route-stops-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-end;
+  margin-bottom: 22px;
+}
+
+.route-stops-heading span {
+  color: #7dd3fc;
+  font-weight: 800;
+}
+
+.route-stops-heading h2 {
+  margin: 5px 0 0;
+  font-size: 30px;
+}
+
+.route-stops-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.route-stop-card {
+  display: flex;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.09);
+  border: 1px solid rgba(255,255,255,.15);
+  cursor: pointer;
+  transition: .2s;
+}
+
+.route-stop-card:hover {
+  transform: translateY(-3px);
+  background: rgba(255,255,255,.15);
+}
+
+.route-stop-card.completed {
+  border-color: rgba(34,197,94,.65);
+  background: rgba(34,197,94,.12);
+}
+
+.route-stop-number {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 18px;
+}
+
+.route-stop-card h3 {
+  margin: 0 0 7px;
+  color: white;
+}
+
+.route-stop-card p {
+  margin: 0;
+  color: rgba(255,255,255,.75);
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.stop-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3,9,22,.78);
+  backdrop-filter: blur(12px);
+}
+
+.stop-modal {
+  width: min(100%, 620px);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 30px;
+  border-radius: 28px;
+  position: relative;
+  background: linear-gradient(
+    145deg,
+    rgba(13,38,78,.98),
+    rgba(5,20,47,.98)
+  );
+  border: 1px solid rgba(255,255,255,.2);
+  box-shadow: 0 30px 100px rgba(0,0,0,.5);
+}
+
+.stop-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,.12);
+}
+
+.stop-modal-label {
+  color: #7dd3fc;
+  font-weight: 800;
+}
+
+.stop-modal h2 {
+  margin: 8px 50px 24px 0;
+  font-size: 32px;
+}
+
+.stop-modal-block {
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.08);
+}
+
+.stop-modal-block h3 {
+  margin: 0 0 10px;
+}
+
+.stop-modal-block p {
+  margin: 0;
+  line-height: 1.65;
+  color: rgba(255,255,255,.86);
+}
+
+.audio-guide-btn,
+.visit-stop-btn {
+  margin-top: 16px;
+}
+
+.stop-completed-message {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  text-align: center;
+  background: rgba(34,197,94,.18);
+  border: 1px solid rgba(34,197,94,.55);
+  color: #86efac;
+  font-weight: 900;
+}
+
+@media (max-width: 700px) {
+  .route-stops-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .route-stops-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .stop-modal {
+    padding: 24px;
+  }
 }
 </style>

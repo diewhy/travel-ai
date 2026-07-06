@@ -16,6 +16,8 @@ const props = defineProps({
   }
 })
 
+const emit = defineEmits(['select-point'])
+
 const config = useRuntimeConfig()
 
 const centers = {
@@ -121,8 +123,9 @@ async function drawPoints() {
         point.coords.length === 2
       ) {
         return {
+          ...point,
           name: point.name || 'Точка маршрута',
-          coords: point.coords
+          coords: [...point.coords]
         }
       }
 
@@ -177,7 +180,10 @@ async function drawPoints() {
         zIndex: 1000
       }
     )
-
+      placemark.events.add('click', () => {
+        emit('select-point', point)
+      })
+      
     map.geoObjects.add(placemark)
   })
 

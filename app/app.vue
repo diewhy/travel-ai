@@ -26,6 +26,113 @@ const pleinairs = ref([])
 const equipment = ref([])
 const routeSummary = ref('')
 const mapTravelMode = ref ('pedestrian')
+const showProfilePanel = ref(false)
+const showWelcomeScreen = ref(true)
+
+function enterPlatform() {
+  showWelcomeScreen.value = false
+
+  nextTick(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
+  })
+}
+
+async function enterPlatformWithRoute() {
+  showWelcomeScreen.value = false
+
+  await nextTick()
+
+  openReadyMoscowRoute('short')
+}
+const userProfile = ref({
+  name: 'Александр',
+  initials: 'АК',
+  role: 'Участник проекта',
+  level: 3,
+  points: 420,
+  nextLevelPoints: 600,
+  routesCompleted: 2,
+  tasksCompleted: 7,
+  photosUploaded: 4,
+  reviewsLeft: 3
+})
+
+const profileProgressPercent = computed(() => {
+  return Math.min(
+    100,
+    Math.round(
+      (userProfile.value.points / userProfile.value.nextLevelPoints) * 100
+    )
+  )
+})
+
+async function scrollToBlock(selector) {
+  await nextTick()
+
+  document
+    .querySelector(selector)
+    ?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    })
+}
+
+async function sidebarHome() {
+  showPlanner.value = false
+  showProfilePanel.value = false
+
+  await nextTick()
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  })
+}
+
+async function sidebarRoutes() {
+  routeMode.value = 'history'
+  showPlanner.value = false
+  showProfilePanel.value = false
+
+  await scrollToBlock('.new-ready-section')
+}
+
+async function sidebarCreateRoute() {
+  showPlanner.value = true
+  showProfilePanel.value = false
+
+  await scrollToBlock('.new-planner-card')
+}
+
+async function sidebarMap() {
+  showProfilePanel.value = false
+
+  if (!result.value || !mapPoints.value.length) {
+    await openReadyMoscowRoute('short')
+  }
+
+  await scrollToBlock('.map-card')
+}
+
+async function sidebarArt() {
+  routeMode.value = 'moscowArt'
+  showPlanner.value = true
+  place.value = ''
+  showProfilePanel.value = false
+
+  await scrollToBlock('.new-planner-card')
+}
+
+function sidebarProfile() {
+  showProfilePanel.value = true
+}
+
+function closeProfilePanel() {
+  showProfilePanel.value = false
+}
 const formattedResult = computed(() => {
   const text = typeof result.value === 'string'
     ? result.value
@@ -40,6 +147,24 @@ const routeDurationName = computed(() => {
   if (routeDuration.value === 'day') return 'На день'
   if (routeDuration.value === 'long') return 'Несколько дней'
   return '—'
+})
+
+const routeProgressPercent = computed(() => {
+  if (!routeStops.value.length) return 0
+
+  return Math.round (
+    (visitedStopIds.value.length / routeStops.value.length) * 100
+  )
+})
+
+const nextRouteStop = computed(() => {
+  return (
+    routeStops.value.find(
+      (stop) => !visitedStopIds.value.includes (stop.id)
+    ) ||
+    routeStops.value[0] ||
+    null
+  )
 })
 const showPlanner = ref(false)
 const routeMode = ref('history')
@@ -421,6 +546,11 @@ function openRouteStop(stop) {
   activeStop.value = stop
 }
 
+function startCurrentRoute() {
+  if (!nextRouteStop.value) return
+  openRouteStop(nextRouteStop.value)
+}
+
 function closeRouteStop() {
   activeStop.value = null
 
@@ -788,102 +918,526 @@ function downloadPdf() {
 
 <template>
   <div class="page">
-<main class="hero center-hero">
-  <section class="hero-center">
-    <img src="/logo222.png" alt="Открой Россию" class="main-logo" />
-  
-    <h1 class="hero-title">
-      {{ routeMode === 'moscowArt' ? 'Москва в красках' : 'Открой Россию' }}
+  <section
+  v-if="showWelcomeScreen"
+  class="welcome-screen"
+>
+  <div class="welcome-bg-glow"></div>
+
+  <div class="welcome-content">
+    <div class="welcome-logo-row">
+      <img
+        src="/logo222.png"
+        alt="Открой Россию"
+      >
+
+      <div>
+        <strong>Открой Россию</strong>
+        <span>Память · маршруты · культура</span>
+      </div>
+    </div>
+
+    <span class="welcome-chip">
+      Цифровая платформа исторических маршрутов
+    </span>
+
+    <h1>
+      Историю нельзя просто прочитать.
+      Её нужно пройти.
     </h1>
-    <h2>
-  {{
-    routeTitle ||
-    (
-      routeMode === 'moscowArt'
-        ? `🎨  Художественный маршрут: ${place || 'Москва'}`
-        : `Маршрут по направлению: ${place || 'Россия'}`
-    )
-  }}
-</h2>
-    <Transition name="fade">
-      <div v-if="!showPlanner">
-    <div class="stats">
-      <div><strong>89</strong><span>регионов</span></div>
-      <div><strong>500+</strong><span>маршрутов</span></div>
-      <div><strong>AI</strong><span>генерация</span></div>
+
+    <p>
+      Интерактивные военно-исторические маршруты по Москве
+      и Московской области: карта, аудиогид, задания на точках,
+      баллы, отзывы и личный кабинет участника.
+    </p>
+
+    <div class="welcome-actions">
+      <button
+        type="button"
+        class="welcome-main-btn"
+        @click="enterPlatform"
+      >
+        Войти в платформу
+      </button>
+
+      <button
+        type="button"
+        class="welcome-route-btn"
+        @click="enterPlatformWithRoute"
+      >
+        Посмотреть готовый маршрут
+      </button>
     </div>
 
-    <div class="badge">
-      {{ 
-        routeMode === 'moscowArt'
-        ? 'Культурное наследие Москвы через творчество'
-        : routeMode === 'history'
-          ? 'Патриотические маршруты России'
-          : 'Новый способ планировать путешествия'
-      }}
-    </div>
+    <div class="welcome-features">
+      <article>
+        <strong>3</strong>
+        <span>готовых маршрута</span>
+      </article>
 
-    <h2 class="hero-question">
-  {{
-    routeMode === 'moscowArt'
-      ? 'Где будем рисовать Москву?'
-      : routeMode === 'history'
-        ? 'Какой город воинской славы посетим?'
-        : 'Куда хотите отправиться?'
-  }}
-</h2>
+      <article>
+        <strong>23</strong>
+        <span>исторические точки</span>
+      </article>
 
-    <div class="mode-switch">
-    <div
-      class="mode-btn"
-      :class="{ active: routeMode === 'history' }"
-      @click="routeMode = 'history'; showPlanner = true, place=''"
-    >
-      Военная история
-    </div>
-
-    <div
-      class="mode-btn"
-      :class="{ active: routeMode === 'moscowArt' }"
-      @click="routeMode = 'moscowArt'; showPlanner = true, place=''"
-    >
-      Москва в красках
+      <article>
+        <strong>РВИО</strong>
+        <span>задания за баллы</span>
+      </article>
     </div>
   </div>
 
-  <div
-  v-if="routeMode === 'history'"
-  class="ready-routes-grid"
->
-  <article
-    v-for="route in readyMoscowRoutes"
-    :key="route.id"
-    class="ready-route-card"
+  <div class="welcome-preview-card">
+    <span>Демо-маршрут</span>
+
+    <h2>Москва. Дорогами памяти</h2>
+
+    <p>
+      Александровский сад, Могила Неизвестного Солдата,
+      Вечный огонь, Пост №1 и Красная площадь.
+    </p>
+
+    <div>
+      <small>2–3 часа</small>
+      <small>6 точек</small>
+      <small>Аудиогид</small>
+    </div>
+  </div>
+</section>
+<template v-else>
+  <aside class="site-sidebar">
+  <button
+    type="button"
+    class="side-brand"
+    @click="sidebarHome"
   >
-    <span class="ready-route-duration">
-      {{ route.duration }}
+    <img
+      src="/logo222.png"
+      alt="Открой Россию"
+    >
+
+    <span>
+      <strong>Открой Россию</strong>
+      <small>Память · маршруты · культура</small>
     </span>
+  </button>
 
-    <h3>{{ route.title }}</h3>
-
-    <p>{{ route.preview }}</p>
+  <nav class="side-nav">
+    <button
+      type="button"
+      class="side-nav-btn active"
+      @click="sidebarHome"
+    >
+      <span>⌂</span>
+      Главная
+    </button>
 
     <button
       type="button"
-      @click.stop.prevent="openReadyMoscowRoute(route.id)"
+      class="side-nav-btn"
+      @click="sidebarRoutes"
     >
-      Открыть маршрут
+      <span>🧭</span>
+      Маршруты
     </button>
-  </article>
-</div>
-  
-</div>
-</Transition>
 
-    <transition name="slide-up">
-      <section v-if="showPlanner" class="planner-card">
-        <button class="close-btn" @click="showPlanner = false; result = ''; days = ''; budget = ''">×</button>
-      <h2>Собрать маршрут</h2>
+    <button
+      type="button"
+      class="side-nav-btn"
+      @click="sidebarMap"
+    >
+      <span>📍</span>
+      Карта
+    </button>
+
+    <button
+      type="button"
+      class="side-nav-btn"
+      @click="sidebarCreateRoute"
+    >
+      <span>✦</span>
+      Создать маршрут
+    </button>
+
+    <button
+      type="button"
+      class="side-nav-btn"
+      @click="sidebarArt"
+    >
+      <span>🎨</span>
+      Москва в красках
+    </button>
+
+    <button
+      type="button"
+      class="side-nav-btn"
+      @click="sidebarProfile"
+    >
+      <span>👤</span>
+      Личный кабинет
+    </button>
+  </nav>
+
+  <div class="side-rvio-card">
+    <span>Задания РВИО</span>
+
+    <strong>
+      Выполняйте задания на точках и получайте баллы
+    </strong>
+
+    <button
+      type="button"
+      @click="sidebarProfile"
+    >
+      Смотреть задания
+    </button>
+  </div>
+
+  <button
+    type="button"
+    class="side-user-card"
+    @click="sidebarProfile"
+  >
+    <div class="side-user-avatar">
+      {{ userProfile.initials }}
+    </div>
+
+    <div>
+      <strong>{{ userProfile.name }}</strong>
+      <span>{{ userProfile.points }} баллов</span>
+    </div>
+  </button>
+</aside>
+
+<div
+  v-if="showProfilePanel"
+  class="profile-drawer-overlay"
+  @click.self="closeProfilePanel"
+>
+  <aside class="profile-drawer">
+    <button
+      type="button"
+      class="profile-drawer-close"
+      @click="closeProfilePanel"
+    >
+      ×
+    </button>
+
+    <div class="profile-drawer-head">
+      <div class="profile-drawer-avatar">
+        {{ userProfile.initials }}
+      </div>
+
+      <div>
+        <span>Личный кабинет</span>
+        <h2>{{ userProfile.name }}</h2>
+        <p>{{ userProfile.role }}</p>
+      </div>
+    </div>
+
+    <div class="profile-level-card">
+      <div class="profile-level-top">
+        <strong>Уровень {{ userProfile.level }}</strong>
+
+        <span>
+          {{ userProfile.points }} / {{ userProfile.nextLevelPoints }} баллов
+        </span>
+      </div>
+
+      <div class="profile-level-line">
+        <div
+          :style="{ width: profileProgressPercent + '%' }"
+        ></div>
+      </div>
+    </div>
+
+    <div class="profile-mini-stats">
+      <article>
+        <strong>{{ userProfile.routesCompleted }}</strong>
+        <span>маршрута</span>
+      </article>
+
+      <article>
+        <strong>{{ userProfile.tasksCompleted }}</strong>
+        <span>заданий</span>
+      </article>
+
+      <article>
+        <strong>{{ userProfile.photosUploaded }}</strong>
+        <span>фото</span>
+      </article>
+
+      <article>
+        <strong>{{ userProfile.reviewsLeft }}</strong>
+        <span>отзывов</span>
+      </article>
+    </div>
+
+    <section class="profile-task-preview">
+      <span>Задания от РВИО</span>
+
+      <h3>
+        Сфотографируйтесь на локации
+      </h3>
+
+      <p>
+        Пользователь приходит на точку маршрута, делает фото,
+        загружает его в платформу и получает баллы. Эти фотографии
+        потом можно использовать как презентацию локации.
+      </p>
+
+      <div class="task-reward">
+        +50 баллов
+      </div>
+    </section>
+
+    <section class="profile-task-preview">
+      <span>Отзывы о точках</span>
+
+      <h3>
+        Оставьте впечатление о месте
+      </h3>
+
+      <p>
+        После посещения точки пользователь сможет поставить оценку,
+        написать отзыв и добавить фото.
+      </p>
+      <div class="task-reward">
+        +15 баллов
+      </div>
+    </section>
+  </aside>
+</div>
+<main class="new-home">
+  <section class="new-hero">
+    <div class="new-hero-content">
+      <div class="top-brand">
+        <img
+          src="/logo222.png"
+          alt="Открой Россию"
+          class="top-brand-logo"
+        />
+
+        <div>
+          <strong>Открой Россию</strong>
+          <span>Память · маршруты · культура</span>
+        </div>
+      </div>
+
+      <span class="hero-chip">
+        Цифровая платформа маршрутов
+      </span>
+
+      <h1>
+        Откройте Москву через маршруты,
+        которые хочется пройти
+      </h1>
+
+      <p>
+        Военно-исторические маршруты, интерактивные точки,
+        аудиогиды, задания и творческие прогулки по Москве
+        и Московской области.
+      </p>
+
+      <div class="hero-actions-row">
+        <button
+          type="button"
+          class="hero-main-btn"
+          @click="routeMode = 'history'; showPlanner = false"
+        >
+          Смотреть маршруты
+        </button>
+
+        <button
+          type="button"
+          class="hero-secondary-btn"
+          @click="showPlanner = true"
+        >
+          Создать маршрут
+        </button>
+      </div>
+
+      <div class="hero-stats-row">
+        <div>
+          <strong>3</strong>
+          <span>готовых маршрута</span>
+        </div>
+
+        <div>
+          <strong>23</strong>
+          <span>исторические точки</span>
+        </div>
+
+        <div>
+          <strong>2</strong>
+          <span>направления проекта</span>
+        </div>
+      </div>
+    </div>
+
+    <aside class="new-hero-card">
+      <span class="new-hero-card-label">
+        Рекомендуемый маршрут
+      </span>
+
+      <h2>Москва. Дорогами памяти</h2>
+
+      <p>
+        Короткий военно-исторический маршрут по центру Москвы
+        с картой, аудиогидом и точками памяти.
+      </p>
+
+      <div class="new-route-tags">
+        <span>2–3 часа</span>
+        <span>6 точек</span>
+        <span>Аудиогид</span>
+      </div>
+
+      <button
+        type="button"
+        class="open-feature-route"
+        @click="openReadyMoscowRoute('short')"
+      >
+        Начать маршрут
+      </button>
+    </aside>
+  </section>
+
+  <section class="new-directions">
+    <article
+      class="new-direction-card active"
+      @click="routeMode = 'history'; showPlanner = false"
+    >
+      <div class="new-direction-icon">🎖️</div>
+
+      <div>
+        <span>Направление</span>
+        <h3>Военная история</h3>
+        <p>
+          Маршруты по мемориалам, музеям и памятным местам.
+        </p>
+      </div>
+    </article>
+
+    <article
+      class="new-direction-card art"
+      @click="routeMode = 'moscowArt'; showPlanner = true; place = ''"
+    >
+      <div class="new-direction-icon">🎨</div>
+
+      <div>
+        <span>Творчество</span>
+        <h3>Москва в красках</h3>
+        <p>
+          Пленэры, городские ракурсы и задания для художников.
+        </p>
+      </div>
+    </article>
+  </section>
+
+  <section
+    v-if="routeMode === 'history' && !showPlanner"
+    class="new-ready-section"
+  >
+    <div class="section-head">
+      <div>
+        <span>Готовые маршруты</span>
+        <h2>Выберите формат прохождения</h2>
+      </div>
+
+      <button
+        type="button"
+        class="section-small-btn"
+        @click="showPlanner = true"
+      >
+        Создать с ИИ
+      </button>
+    </div>
+
+    <div class="new-ready-grid">
+      <article
+        v-for="route in readyMoscowRoutes"
+        :key="route.id"
+        class="new-ready-card"
+        :class="`ready-${route.id}`"
+      >
+        <div class="ready-card-top">
+          <span class="ready-card-icon">
+            {{
+              route.id === 'short'
+                ? '🕯️'
+                : route.id === 'day'
+                  ? '🎖️'
+                  : '⭐'
+            }}
+          </span>
+
+          <span class="ready-card-duration">
+            {{ route.duration }}
+          </span>
+        </div>
+
+        <h3>{{ route.title }}</h3>
+
+        <p>{{ route.preview }}</p>
+
+        <div class="ready-card-meta">
+        <span>📍 {{ route.mapPoints.length }} точек</span>
+          <span>🗺 Карта</span>
+          <span>🔊 Аудиогид</span>
+          <span>📄 PDF</span>
+        </div>
+
+        <button
+          type="button"
+          class="ready-card-btn"
+          @click.stop.prevent="openReadyMoscowRoute(route.id)"
+        >
+          Открыть маршрут
+        </button>
+      </article>
+    </div>
+  </section>
+
+  <transition name="slide-up">
+    <section
+      v-if="showPlanner"
+      class="planner-card new-planner-card"
+    >
+      <button
+        class="close-btn"
+        @click="showPlanner = false; result = ''; days = ''; budget = ''"
+      >
+        ×
+      </button>
+
+      <h2>
+        {{
+          routeMode === 'moscowArt'
+            ? 'Создать творческий маршрут'
+            : 'Собрать маршрут'
+        }}
+      </h2>
+
+      <div class="mode-switch">
+        <div
+          class="mode-btn"
+          :class="{ active: routeMode === 'history' }"
+          @click="routeMode = 'history'; place = ''"
+        >
+          Военная история
+        </div>
+
+        <div
+          class="mode-btn"
+          :class="{ active: routeMode === 'moscowArt' }"
+          @click="routeMode = 'moscowArt'; place = ''"
+        >
+          Москва в красках
+        </div>
+      </div>
+
       <div class="city-picker">
         <div
           v-for="group in cityGroups"
@@ -891,13 +1445,14 @@ function downloadPdf() {
           class="city-group"
         >
           <h3>{{ group.group }}</h3>
+
           <div class="city-grid">
             <button
               v-for="city in group.items"
               :key="city"
               type="button"
               class="city-btn"
-              :class="{active: place === city}"
+              :class="{ active: place === city }"
               @click="place = city"
             >
               {{ city }}
@@ -905,51 +1460,54 @@ function downloadPdf() {
           </div>
         </div>
       </div>
+
       <div class="duration-options">
-  <button
-    type="button"
-    class="duration-btn"
-    :class="{ active: routeDuration === 'short' }"
-    @click="routeDuration = 'short'; days = '1'"
-  >
-    🕐 Короткий
-    <span>2–3 часа</span>
-  </button>
+        <button
+          type="button"
+          class="duration-btn"
+          :class="{ active: routeDuration === 'short' }"
+          @click="routeDuration = 'short'; days = '1'"
+        >
+          🕐 Короткий
+          <span>2–3 часа</span>
+        </button>
 
-  <button
-    type="button"
-    class="duration-btn"
-    :class="{ active: routeDuration === 'day' }"
-    @click="routeDuration = 'day'; days = '1'"
-  >
-    🌇 На день
-    <span>6–8 часов</span>
-  </button>
+        <button
+          type="button"
+          class="duration-btn"
+          :class="{ active: routeDuration === 'day' }"
+          @click="routeDuration = 'day'; days = '1'"
+        >
+          🌇 На день
+          <span>6–8 часов</span>
+        </button>
 
-  <button
-    type="button"
-    class="duration-btn"
-    :class="{ active: routeDuration === 'long' }"
-    @click="routeDuration = 'long'; days = '3'"
-  >
-    🗓 Несколько дней
-    <span>2–3 дня</span>
-  </button>
-</div>
+        <button
+          type="button"
+          class="duration-btn"
+          :class="{ active: routeDuration === 'long' }"
+          @click="routeDuration = 'long'; days = '3'"
+        >
+          🗓 Несколько дней
+          <span>2–3 дня</span>
+        </button>
+      </div>
+
       <input
         v-model="budget"
         type="number"
         :placeholder="routeMode === 'moscowArt' ? 'Бюджет на материалы, ₽' : 'Бюджет, ₽'"
       />
-    <div v-if="routeMode !== 'moscowArt'">  
-    </div>       
+
       <button @click="generateRoute">
-        {{ routeMode === 'moscowArt' ? 'Создать маршрут плэнера' : 'Сгенерировать маршрут' }}
+        {{
+          routeMode === 'moscowArt'
+            ? 'Создать маршрут плэнера'
+            : 'Сгенерировать маршрут'
+        }}
       </button>
-      
     </section>
-    </transition>
-  </section>
+  </transition>
 </main>
 
     <section v-if="result" class="result-wrap">
@@ -1067,15 +1625,90 @@ function downloadPdf() {
   v-if="routeStops.length"
   class="route-stops-section"
 >
+  <div class="route-progress-card">
+    <div>
+      <span class="route-progress-label">
+        Интерактивное прохождение
+      </span>
+
+      <h2>Маршрут готов к прохождению</h2>
+
+      <p>
+        Пользователь проходит точки по порядку, открывает карточки объектов,
+        слушает аудиогид, выполняет задания и отмечает посещение.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="start-route-btn"
+      @click="startCurrentRoute"
+    >
+      {{
+        visitedStopIds.length
+          ? 'Продолжить маршрут'
+          : 'Начать маршрут'
+      }}
+    </button>
+  </div>
+
+  <div class="route-progress-line-wrap">
+    <div class="route-progress-top">
+      <span>
+        Пройдено: {{ visitedStopIds.length }} / {{ routeStops.length }}
+      </span>
+
+      <strong>{{ routeProgressPercent }}%</strong>
+    </div>
+
+    <div class="route-progress-line">
+      <div
+        class="route-progress-fill"
+        :style="{ width: routeProgressPercent + '%' }"
+      ></div>
+    </div>
+  </div>
+
+  <div class="route-features-grid">
+    <div class="route-feature-card">
+      <strong>🗺 Карта</strong>
+      <span>точки и линия маршрута</span>
+    </div>
+
+    <div class="route-feature-card">
+      <strong>📖 Справка</strong>
+      <span>история каждого объекта</span>
+    </div>
+
+    <div class="route-feature-card">
+      <strong>🔊 Аудиогид</strong>
+      <span>рассказ на точке маршрута</span>
+    </div>
+
+    <div class="route-feature-card">
+      <strong>🎯 Задание</strong>
+      <span>действие на каждой локации</span>
+    </div>
+
+    <div class="route-feature-card">
+      <strong>✅ Посещение</strong>
+      <span>отметка пройденной точки</span>
+    </div>
+
+    <div class="route-feature-card">
+      <strong>📄 PDF</strong>
+      <span>маршрут можно сохранить</span>
+    </div>
+  </div>
+
   <div class="route-stops-heading">
     <div>
-      <span>Интерактивный маршрут</span>
-      <h2>Точки путешествия</h2>
+      <span>Точки маршрута</span>
+      <h2>Куда идём</h2>
     </div>
 
     <strong>
-      Пройдено:
-      {{ visitedStopIds.length }} / {{ routeStops.length }}
+      {{ routeDurationName }}
     </strong>
   </div>
 
@@ -1185,6 +1818,7 @@ function downloadPdf() {
     </div>
   </article>
 </div>
+</template>
   </div>
 </template>
 
@@ -2274,6 +2908,1581 @@ button:hover {
 
   .stop-modal {
     padding: 24px;
+  }
+}
+
+.route-progress-card {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 22px;
+  align-items: center;
+  margin-bottom: 22px;
+  padding: 24px;
+  border-radius: 24px;
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.22),
+    rgba(6, 182, 212, 0.12)
+  );
+  border: 1px solid rgba(125, 211, 252, 0.25);
+}
+
+.route-progress-label {
+  color: #7dd3fc;
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.route-progress-card h2 {
+  margin: 8px 0 10px;
+  font-size: 30px;
+  color: white;
+}
+
+.route-progress-card p {
+  margin: 0;
+  color: rgba(255,255,255,.78);
+  line-height: 1.6;
+}
+
+.start-route-btn {
+  margin: 0;
+  height: 56px;
+  border-radius: 18px;
+  background: linear-gradient(90deg, #facc15, #f97316);
+  color: #111827;
+  font-weight: 900;
+}
+
+.route-progress-line-wrap {
+  margin-bottom: 24px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
+}
+
+.route-progress-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-weight: 800;
+}
+
+.route-progress-top strong {
+  color: #7dd3fc;
+}
+
+.route-progress-line {
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.14);
+  overflow: hidden;
+}
+
+.route-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #22c55e, #06b6d4);
+  transition: width .3s ease;
+}
+
+.route-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.route-feature-card {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.09);
+  border: 1px solid rgba(255,255,255,.15);
+}
+
+.route-feature-card strong {
+  display: block;
+  margin-bottom: 6px;
+  color: white;
+  font-size: 16px;
+}
+
+.route-feature-card span {
+  color: rgba(255,255,255,.72);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+@media (max-width: 850px) {
+  .route-progress-card {
+    grid-template-columns: 1fr;
+  }
+
+  .route-features-grid {
+    grid-template-columns: 1fr;
+  }
+}
+html,
+body,
+#__nuxt {
+  margin: 0;
+  min-height: 100%;
+  background: #061327 !important;
+}
+
+body {
+  font-family: 'Manrope', Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 28px;
+  color: white;
+  background:
+    radial-gradient(
+      circle at 80% 0%,
+      rgba(37, 99, 235, 0.2),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 10% 80%,
+      rgba(6, 182, 212, 0.12),
+      transparent 32%
+    ),
+    linear-gradient(
+      145deg,
+      #061327 0%,
+      #071a35 48%,
+      #08264b 100%
+    ) !important;
+}
+
+.new-home {
+  width: min(100%, 1240px);
+  margin: 0 auto;
+  padding-top: 10px;
+}
+
+.new-hero {
+  min-height: 540px;
+  padding: 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) 390px;
+  gap: 34px;
+  align-items: center;
+  border-radius: 34px;
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  background:
+    radial-gradient(
+      circle at 85% 20%,
+      rgba(56, 189, 248, 0.28),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 10% 100%,
+      rgba(250, 204, 21, 0.12),
+      transparent 28%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(9, 40, 86, 0.98),
+      rgba(7, 78, 128, 0.92)
+    );
+  box-shadow: 0 32px 95px rgba(0, 14, 42, 0.36);
+  overflow: hidden;
+  position: relative;
+}
+
+.new-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 82px,
+      rgba(255, 255, 255, 0.025) 83px
+    );
+  pointer-events: none;
+}
+
+.new-hero-content,
+.new-hero-card {
+  position: relative;
+  z-index: 2;
+}
+
+.top-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.top-brand-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.25));
+}
+
+.top-brand strong,
+.top-brand span {
+  display: block;
+}
+
+.top-brand strong {
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.top-brand span {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 13px;
+}
+
+.hero-chip {
+  display: inline-flex;
+  padding: 9px 13px;
+  border-radius: 999px;
+  background: rgba(250, 204, 21, 0.14);
+  border: 1px solid rgba(250, 204, 21, 0.28);
+  color: #fde68a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.new-hero h1 {
+  max-width: 760px;
+  margin: 20px 0 18px;
+  font-size: clamp(40px, 5vw, 68px);
+  line-height: 1.03;
+  letter-spacing: -0.055em;
+  color: white;
+}
+
+.new-hero p {
+  max-width: 720px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 17px;
+  line-height: 1.72;
+}
+
+.hero-actions-row {
+  margin-top: 31px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hero-main-btn,
+.hero-secondary-btn,
+.open-feature-route,
+.ready-card-btn,
+.section-small-btn {
+  width: auto;
+  margin: 0;
+  border: none;
+  cursor: pointer;
+}
+
+.hero-main-btn,
+.hero-secondary-btn {
+  min-height: 52px;
+  padding: 0 22px;
+  border-radius: 15px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.hero-main-btn {
+  color: #111827;
+  background: linear-gradient(90deg, #facc15, #f97316);
+}
+
+.hero-secondary-btn {
+  color: white;
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08);
+}
+
+.hero-stats-row {
+  margin-top: 30px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(130px, 1fr));
+  gap: 12px;
+  max-width: 700px;
+}
+
+.hero-stats-row div {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+.hero-stats-row strong,
+.hero-stats-row span {
+  display: block;
+}
+
+.hero-stats-row strong {
+  color: #7dd3fc;
+  font-size: 30px;
+}
+
+.hero-stats-row span {
+  margin-top: 4px;
+  color: rgba(255,255,255,.66);
+  font-size: 12px;
+}
+
+.new-hero-card {
+  width: 100%;
+  max-width: 390px;
+  justify-self: end;
+  padding: 26px;
+  border-radius: 27px;
+  background: rgba(5, 20, 49, 0.84);
+  border: 1px solid rgba(255,255,255,.16);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);
+}
+
+.new-hero-card-label {
+color: #7dd3fc;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.new-hero-card h2 {
+  margin: 10px 0 12px;
+  font-size: 26px;
+  line-height: 1.25;
+  color: white;
+}
+
+.new-hero-card p {
+  color: rgba(255,255,255,.68);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.new-route-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 18px 0 20px;
+}
+
+.new-route-tags span {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.09);
+  color: rgba(255,255,255,.82);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.open-feature-route {
+  width: 100%;
+  min-height: 50px;
+  border-radius: 15px;
+  color: white;
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.new-directions {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.new-direction-card {
+  min-height: 190px;
+  padding: 26px;
+  display: flex;
+  gap: 18px;
+  border-radius: 28px;
+  color: white;
+  border: 1px solid rgba(255,255,255,.12);
+  background:
+    radial-gradient(
+      circle at 90% 16%,
+      rgba(250, 204, 21, 0.14),
+      transparent 26%
+    ),
+    linear-gradient(145deg, #113c7c, #071d42);
+  box-shadow: 0 22px 55px rgba(0, 13, 40, 0.22);
+  cursor: pointer;
+  transition: 0.24s;
+}
+
+.new-direction-card.art {
+  background:
+    radial-gradient(
+      circle at 90% 16%,
+      rgba(236, 72, 153, 0.18),
+      transparent 26%
+    ),
+    linear-gradient(145deg, #4c2f91, #071d42);
+}
+
+.new-direction-card:hover,
+.new-ready-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(125, 211, 252, 0.3);
+}
+
+.new-direction-icon {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: rgba(255,255,255,.1);
+  font-size: 26px;
+}
+
+.new-direction-card span {
+  color: #7dd3fc;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.new-direction-card h3 {
+  margin: 8px 0 8px;
+  color: white;
+  font-size: 25px;
+}
+
+.new-direction-card p {
+  color: rgba(255,255,255,.7);
+  font-size: 14px;
+}
+
+.new-ready-section {
+  margin-top: 34px;
+}
+
+.section-head {
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-end;
+}
+
+.section-head span {
+  color: #7dd3fc;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.section-head h2 {
+  margin: 7px 0 0;
+  color: white;
+  font-size: 32px;
+}
+
+.section-small-btn {
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 14px;
+  color: #111827;
+  background: linear-gradient(90deg, #facc15, #f97316);
+  font-weight: 900;
+}
+
+.new-ready-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.new-ready-card {
+  padding: 24px;
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 28px;
+  border: 1px solid rgba(255,255,255,.12);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(18, 50, 97, 0.88),
+      rgba(9, 31, 66, 0.96)
+    );
+  box-shadow: 0 22px 55px rgba(0, 13, 40, 0.22);
+  transition: 0.24s;
+  position: relative;
+  overflow: hidden;
+}
+
+.new-ready-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 7px;
+}
+
+.ready-short::before {
+  background: #0ea5e9;
+}
+
+.ready-day::before {
+  background: #dc2626;
+}
+
+.ready-long::before {
+  background: #f59e0b;
+}
+
+.ready-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ready-card-icon {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: rgba(255,255,255,.1);
+  font-size: 25px;
+}
+
+.ready-card-duration {
+  padding: 8px 11px;
+  border-radius: 999px;
+  color: #111827;
+  background: #fde68a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.new-ready-card h3 {
+  margin: 24px 0 12px;
+  color: white;
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.new-ready-card p {
+  margin: 0;
+  color: rgba(255,255,255,.68);
+  line-height: 1.65;
+  font-size: 14px;
+}
+
+.ready-card-meta {
+  margin: 20px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ready-card-meta span {
+  padding: 7px 9px;
+  border-radius: 9px;
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.76);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.ready-card-btn {
+  margin-top: auto;
+  min-height: 48px;
+  border-radius: 15px;
+  color: white;
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
+  font-weight: 900;
+}
+
+.new-planner-card {
+  width: min(100%, 880px);
+  margin-top: 34px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(18, 50, 97, 0.92),
+      rgba(9, 31, 66, 0.98)
+    );
+  border: 1px solid rgba(125, 211, 252, 0.16);
+}
+
+@media (max-width: 1050px) {
+  .new-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .new-hero-card {
+    justify-self: start;
+  }
+
+  .new-ready-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .page {
+    padding: 16px;
+  }
+
+  .new-hero {
+    min-height: auto;
+    padding: 28px 22px;
+  }
+
+  .top-brand {
+    margin-bottom: 22px;
+  }
+
+  .new-hero h1 {
+    font-size: 40px;
+    letter-spacing: -0.035em;
+  }
+
+  .hero-stats-row,
+  .new-directions {
+    grid-template-columns: 1fr;
+  }
+
+  .section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+.result-wrap {
+  width: min(100%, 1240px);
+  margin: 42px auto 0;
+  padding: 28px;
+  border-radius: 34px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(18, 50, 97, 0.9),
+      rgba(9, 31, 66, 0.98)
+    );
+  border: 1px solid rgba(125, 211, 252, 0.16);
+  box-shadow: 0 28px 80px rgba(0, 14, 42, 0.34);
+  color: white;
+}
+
+.route-header-image {
+  min-height: 300px;
+  padding: 32px;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 -120px 120px rgba(0,0,0,.34);
+}
+
+.route-header.route-header-image {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.route-label {
+  margin: 0 0 10px;
+  color: #7dd3fc;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.route-header h2 {
+  margin: 0;
+  color: white;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.route-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.route-stats span {
+  padding: 10px 13px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.14);
+  color: rgba(255,255,255,.86);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.history-card,
+.memory-card {
+  margin-top: 20px;
+  padding: 24px;
+  border-radius: 24px;
+  background: rgba(255,255,255,.075);
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+.history-card h3,
+.memory-card h3 {
+  margin: 0 0 12px;
+  color: #7dd3fc;
+  font-size: 20px;
+}
+
+.history-card p,
+.memory-card li {
+  color: rgba(255,255,255,.82);
+  line-height: 1.7;
+}
+
+.memory-card ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.result {
+  margin-top: 22px;
+  padding: 24px;
+  border-radius: 24px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.86);
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.result h3 {
+  margin: 22px 0 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: white;
+  font-size: 22px;
+  line-height: 1.25;
+}
+
+.pdf-btn {
+  width: 100%;
+  margin-top: 22px;
+  min-height: 54px;
+  border-radius: 18px;
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
+  color: white;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.map-card {
+  width: min(100%, 1240px);
+  max-width: 1240px;
+  margin: 34px auto 0;
+  padding: 28px;
+  border-radius: 34px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(18, 50, 97, 0.9),
+      rgba(9, 31, 66, 0.98)
+    );
+  border: 1px solid rgba(125, 211, 252, 0.16);
+  box-shadow: 0 28px 80px rgba(0, 14, 42, 0.34);
+  color: white;
+}
+
+.map-card h2 {
+  margin: 0 0 20px;
+  color: white;
+  font-size: 30px;
+  letter-spacing: -0.03em;
+}
+
+.yandex-map {
+  height: 460px !important;
+  min-height: 460px !important;
+  border-radius: 26px !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  overflow: hidden !important;
+  background: rgba(255,255,255,.08) !important;
+}
+
+@media (max-width: 760px) {
+  .result-wrap,
+  .map-card {
+    padding: 18px;
+    border-radius: 26px;
+  }
+
+  .route-header.route-header-image {
+    min-height: 260px;
+    padding: 22px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+  }
+
+  .route-stats {
+    justify-content: flex-start;
+  }
+
+  .yandex-map {
+    height: 360px !important;
+    min-height: 360px !important;
+  }
+}
+.site-sidebar {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  bottom: 24px;
+  z-index: 100;
+  width: 280px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 30px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(7, 28, 64, 0.96),
+      rgba(4, 17, 40, 0.98)
+    );
+  border: 1px solid rgba(125, 211, 252, 0.16);
+  box-shadow: 0 28px 90px rgba(0, 14, 42, 0.42);
+  backdrop-filter: blur(22px);
+}
+
+.side-brand {
+  width: 100%;
+  margin: 0 0 22px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  color: white;
+  text-align: left;
+  box-shadow: none;
+}
+
+.side-brand:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.side-brand img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.side-brand strong,
+.side-brand small {
+  display: block;
+}
+
+.side-brand strong {
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.side-brand small {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+}
+
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.side-nav-btn {
+  width: 100%;
+  min-height: 50px;
+  margin: 0;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 16px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  border: 1px solid transparent;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.side-nav-btn:hover {
+  transform: translateX(3px);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  color: white;
+}
+
+.side-nav-btn.active {
+  color: white;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(37, 99, 235, 0.42),
+      rgba(6, 182, 212, 0.16)
+    );
+  border-color: rgba(125, 211, 252, 0.22);
+}
+
+.side-nav-btn span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.side-rvio-card {
+  margin-top: auto;
+  padding: 18px;
+  border-radius: 22px;
+  background:
+    radial-gradient(
+      circle at 88% 18%,
+      rgba(250, 204, 21, 0.2),
+      transparent 30%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(37, 99, 235, 0.34),
+      rgba(7, 30, 70, 0.86)
+    );
+  border: 1px solid rgba(250, 204, 21, 0.18);
+}
+
+.side-rvio-card span {
+  color: #fde68a;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.side-rvio-card strong {
+  display: block;
+  margin: 8px 0 14px;
+  color: white;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.side-rvio-card button {
+  width: 100%;
+  min-height: 42px;
+  margin: 0;
+  padding: 0 14px;
+  border-radius: 13px;
+  color: #111827;
+  background: linear-gradient(90deg, #facc15, #f97316);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.side-user-card {
+  width: 100%;
+  margin: 14px 0 0;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.075);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  text-align: left;
+  box-shadow: none;
+}
+
+.side-user-card:hover {
+  transform: translateY(-2px);
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.side-user-avatar {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: #111827;
+  background: linear-gradient(135deg, #facc15, #f97316);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.side-user-card strong,
+.side-user-card span {
+  display: block;
+}
+
+.side-user-card strong {
+  font-size: 14px;
+}
+
+.side-user-card span {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+}
+
+.profile-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(2, 8, 23, 0.64);
+  backdrop-filter: blur(10px);
+}
+
+.profile-drawer {
+  width: min(100%, 460px);
+  height: 100vh;
+  padding: 28px;
+  overflow-y: auto;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8, 31, 70, 0.98),
+      rgba(4, 17, 40, 0.99)
+    );
+    border-left: 1px solid rgba(125, 211, 252, 0.16);
+  box-shadow: -28px 0 90px rgba(0, 14, 42, 0.5);
+  color: white;
+}
+
+.profile-drawer-close {
+  width: 42px;
+  height: 42px;
+  margin: 0 0 22px auto;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.09);
+  color: white;
+  box-shadow: none;
+  font-size: 26px;
+}
+
+.profile-drawer-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-drawer-avatar {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  color: #111827;
+  background: linear-gradient(135deg, #facc15, #f97316);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.profile-drawer-head span,
+.profile-task-preview span {
+  color: #7dd3fc;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.profile-drawer-head h2 {
+  margin: 6px 0 4px;
+  font-size: 28px;
+}
+
+.profile-drawer-head p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.profile-level-card {
+  margin-top: 26px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.075);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-level-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.profile-level-top span {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.profile-level-line {
+  height: 11px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.profile-level-line div {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22c55e, #06b6d4);
+}
+
+.profile-mini-stats {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.profile-mini-stats article {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.075);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-mini-stats strong {
+  display: block;
+  color: #7dd3fc;
+  font-size: 28px;
+}
+
+.profile-mini-stats span {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
+}
+
+.profile-task-preview {
+  margin-top: 16px;
+  padding: 20px;
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(18, 50, 97, 0.9),
+      rgba(9, 31, 66, 0.98)
+    );
+  border: 1px solid rgba(125, 211, 252, 0.12);
+}
+
+.profile-task-preview h3 {
+  margin: 8px 0 10px;
+  font-size: 20px;
+}
+
+.profile-task-preview p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.66);
+  line-height: 1.6;
+  font-size: 13px;
+}
+
+.task-reward {
+  margin-top: 14px;
+  display: inline-flex;
+  padding: 8px 11px;
+  border-radius: 999px;
+  color: #111827;
+  background: #fde68a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+@media (min-width: 1101px) {
+  .page {
+    padding-left: 328px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .site-sidebar {
+    left: 16px;
+    right: 16px;
+    top: auto;
+    bottom: 16px;
+    width: auto;
+    height: 74px;
+    padding: 8px;
+    flex-direction: row;
+    align-items: center;
+    border-radius: 24px;
+  }
+
+  .side-brand,
+  .side-rvio-card,
+  .side-user-card {
+    display: none;
+  }
+
+  .side-nav {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .side-nav-btn {
+    min-height: 56px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+  }
+
+  .side-nav-btn span {
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+  }
+
+  .side-nav-btn:nth-child(4) {
+    display: none;
+  }
+
+  .profile-drawer {
+    width: 100%;
+  }
+}
+.welcome-screen {
+  min-height: calc(100vh - 56px);
+  width: min(100%, 1240px);
+  margin: 0 auto;
+  padding: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 46px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 38px;
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  background:
+    radial-gradient(
+      circle at 78% 18%,
+      rgba(56, 189, 248, 0.24),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 8% 100%,
+      rgba(250, 204, 21, 0.13),
+      transparent 32%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(8, 31, 70, 0.98),
+      rgba(7, 78, 128, 0.92)
+    );
+  box-shadow: 0 34px 110px rgba(0, 14, 42, 0.42);
+}
+
+.welcome-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 82px,
+      rgba(255, 255, 255, 0.026) 83px
+    );
+  pointer-events: none;
+}
+
+.welcome-content {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 740px);
+}
+
+.welcome-preview-card {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 380px;
+  transform: translateY(-10px);
+}
+
+.welcome-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.welcome-logo-row img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.28));
+}
+
+.welcome-logo-row strong,
+.welcome-logo-row span {
+  display: block;
+}
+
+.welcome-logo-row strong {
+  color: white;
+  font-size: 25px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.welcome-logo-row span {
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 13px;
+}
+
+.welcome-chip {
+  display: inline-flex;
+  padding: 9px 13px;
+  border-radius: 999px;
+  background: rgba(250, 204, 21, 0.14);
+  border: 1px solid rgba(250, 204, 21, 0.28);
+  color: #fde68a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.welcome-content h1 {
+  max-width: 760px;
+  margin: 22px 0 18px;
+  color: white;
+  font-size: clamp(50px, 6vw, 82px);
+  line-height: 1.02;
+  letter-spacing: -0.06em;
+}
+
+.welcome-content p {
+  max-width: 720px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 18px;
+  line-height: 1.72;
+}
+
+.welcome-actions {
+  margin-top: 34px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.welcome-main-btn,
+.welcome-route-btn {
+  width: auto;
+  min-height: 56px;
+  margin: 0;
+  padding: 0 24px;
+  border-radius: 17px;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.welcome-main-btn {
+  color: #111827;
+  background: linear-gradient(90deg, #facc15, #f97316);
+}
+
+.welcome-route-btn {
+  color: white;
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08);
+}
+
+.welcome-features {
+  margin-top: 34px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 720px;
+}
+
+.welcome-features article {
+  padding: 17px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+.welcome-features strong,
+.welcome-features span {
+  display: block;
+}
+
+.welcome-features strong {
+  color: #7dd3fc;
+  font-size: 30px;
+}
+
+.welcome-features span {
+  margin-top: 5px;
+  color: rgba(255,255,255,.66);
+  font-size: 12px;
+}
+
+.welcome-preview-card {
+  padding: 28px;
+  border-radius: 30px;
+  background: rgba(5, 20, 49, 0.84);
+  border: 1px solid rgba(255,255,255,.16);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.32);
+}
+
+.welcome-preview-card > span {
+  color: #7dd3fc;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.welcome-preview-card h2 {
+  margin: 12px 0;
+  color: white;
+  font-size: 28px;
+  line-height: 1.22;
+}
+
+.welcome-preview-card p {
+  margin: 0;
+  color: rgba(255,255,255,.68);
+  line-height: 1.65;
+  font-size: 14px;
+}
+
+.welcome-preview-card div {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.welcome-preview-card small {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.09);
+  color: rgba(255,255,255,.82);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (max-width: 1050px) {
+  .welcome-screen {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .welcome-preview-card {
+    flex: none;
+    width: min(100%, 520px);
+  }
+}
+
+@media (max-width: 760px) {
+  .welcome-screen {
+    min-height: auto;
+    padding: 28px 22px;
+    border-radius: 30px;
+  }
+
+  .welcome-content h1 {
+    font-size: 42px;
+    letter-spacing: -0.04em;
+  }
+
+  .welcome-features {
+    grid-template-columns: 1fr;
+  }
+}
+
+  .welcome-content h1 {
+    font-size: 42px;
+    letter-spacing: -0.04em;
+  }
+
+  .welcome-features {
+    grid-template-columns: 1fr;
+  }
+.welcome-screen .welcome-features {
+  margin-top: 34px !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  max-width: 760px !important;
+}
+
+.welcome-screen .welcome-features article {
+  min-height: 96px;
+  padding: 18px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  border-radius: 18px !important;
+  background: rgba(255,255,255,.08) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+}
+
+.welcome-screen .welcome-features strong {
+  display: block !important;
+  color: #7dd3fc !important;
+  font-size: 30px !important;
+  line-height: 1 !important;
+}
+
+.welcome-screen .welcome-features span {
+  display: block !important;
+  margin-top: 7px !important;
+  color: rgba(255,255,255,.66) !important;
+  font-size: 12px !important;
+  line-height: 1.3 !important;
+}
+
+@media (max-width: 760px) {
+  .welcome-screen .welcome-features {
+    grid-template-columns: 1fr !important;
   }
 }
 </style>

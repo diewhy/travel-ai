@@ -6,7 +6,11 @@ export default defineNuxtConfig({
     openaiApiKey: process.env.OPENAI_API_KEY,
 
     public: {
-      yandexMapsKey: process.env.NUXT_PUBLIC_YANDEX_MAPS_KEY
+      yandexMapsKey: process.env.NUXT_PUBLIC_YANDEX_MAPS_KEY,
+      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
+      supabasePublishableKey:
+        process.env.NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+        process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY
     }
   }
 })

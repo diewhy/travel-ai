@@ -89,6 +89,7 @@ const {
 
 const showAuthModal = ref(false)
 const authLoading = ref(false)
+const logoutLoading = ref(false)
 
 const {
   user,
@@ -96,7 +97,8 @@ const {
   authReady,
   authError,
   isAuthenticated,
-  signInWithCustomProvider
+  signInWithCustomProvider,
+  signOut
 } = useAuth()
 
 function getInitials(name) {
@@ -118,6 +120,9 @@ function setGuestProfile() {
     ...userProfile.value,
     name: 'Гость',
     initials: 'Г',
+    avatarUrl: '',
+    email: '',
+    authProvider: '',
     role: 'Войдите через Яндекс',
     level: 1,
     points: 0,
@@ -140,16 +145,47 @@ function syncAuthenticatedProfile() {
   const identityData =
     user.value.identities?.[0]?.identity_data || {}
 
+  const dbName =
+    dbProfile.display_name &&
+    dbProfile.display_name !== 'Путешественник'
+      ? dbProfile.display_name
+      : ''
+
   const name =
-    dbProfile.display_name ||
+    dbName ||
     identityData.real_name ||
-    identityData.display_name ||
     identityData.name ||
+    identityData.display_name ||
     metadata.full_name ||
     metadata.name ||
     metadata.display_name ||
     user.value.email?.split('@')[0] ||
     'Путешественник'
+
+  const avatarUrl =
+    dbProfile.avatar_url ||
+    identityData.picture ||
+    identityData.avatar_url ||
+    metadata.picture ||
+    metadata.avatar_url ||
+    ''
+
+  const email =
+    user.value.email ||
+    identityData.email ||
+    metadata.email ||
+    ''
+
+  const rawProvider =
+    dbProfile.auth_provider ||
+    user.value.app_metadata?.provider ||
+    user.value.identities?.[0]?.provider ||
+    ''
+
+  const authProvider =
+    String(rawProvider).includes('yandex')
+      ? 'Яндекс ID'
+      : rawProvider || 'OAuth'
 
   const level = Number(dbProfile.level || 1)
 
@@ -157,6 +193,9 @@ function syncAuthenticatedProfile() {
     ...userProfile.value,
     name,
     initials: getInitials(name),
+    avatarUrl,
+    email,
+    authProvider,
     role: 'Участник проекта',
     level,
     points: Number(dbProfile.points || 0),
@@ -219,6 +258,43 @@ function handleSidebarProfile() {
   }
 
   openSidebarProfile()
+}
+
+async function handleSignOut() {
+  if (logoutLoading.value) return
+
+  logoutLoading.value = true
+
+  try {
+    await signOut()
+
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(
+        'open-russia-auth-intent'
+      )
+    }
+
+    closeProfilePanel()
+    showAuthModal.value = false
+    setGuestProfile()
+    showWelcomeScreen.value = true
+
+    await nextTick()
+
+    if (typeof window !== 'undefined') {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      })
+    }
+  } catch (error) {
+    console.error(
+      '[Auth] Ошибка выхода:',
+      error
+    )
+  } finally {
+    logoutLoading.value = false
+  }
 }
 
 async function signInWithYandex() {
@@ -324,7 +400,9 @@ function closeRouteStop() {
   v-if="showProfilePanel"
   :user-profile="userProfile"
   :progress-percent="profileProgressPercent"
+  :logout-loading="logoutLoading"
   @close="closeProfilePanel"
+  @logout="handleSignOut"
 />
 
 <main class="new-home">

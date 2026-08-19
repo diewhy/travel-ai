@@ -122,6 +122,53 @@ export function useAuth() {
     cleanAuthParams()
   }
 
+  function getProviderProfileData(authUser) {
+    if (!authUser) {
+      return {
+        displayName: '',
+        avatarUrl: '',
+        provider: ''
+      }
+    }
+
+    const metadata =
+      authUser.user_metadata || {}
+
+    const identity =
+      authUser.identities?.[0] || {}
+
+    const identityData =
+      identity.identity_data || {}
+
+    const displayName =
+      identityData.real_name ||
+      identityData.name ||
+      identityData.display_name ||
+      metadata.full_name ||
+      metadata.name ||
+      metadata.display_name ||
+      authUser.email?.split('@')[0] ||
+      ''
+
+    const avatarUrl =
+      identityData.picture ||
+      identityData.avatar_url ||
+      metadata.picture ||
+      metadata.avatar_url ||
+      ''
+
+    const provider =
+      authUser.app_metadata?.provider ||
+      identity.provider ||
+      ''
+
+    return {
+      displayName,
+      avatarUrl,
+      provider
+    }
+  }
+
   async function loadProfile(userId = user.value?.id) {
     if (!$supabase || !userId) {
       profile.value = null
@@ -137,6 +184,70 @@ export function useAuth() {
     if (error) {
       authError.value = error.message
       return null
+    }
+
+    if (!data || !user.value) {
+      profile.value = data
+      return data
+    }
+
+    const providerProfile =
+      getProviderProfileData(user.value)
+
+    const patch = {}
+
+    if (
+      providerProfile.displayName &&
+      (
+        !data.display_name ||
+        data.display_name === 'Путешественник'
+      )
+    ) {
+      patch.display_name =
+        providerProfile.displayName
+    }
+
+    if (
+      providerProfile.avatarUrl &&
+      !data.avatar_url
+    ) {
+      patch.avatar_url =
+        providerProfile.avatarUrl
+    }
+
+    if (
+      providerProfile.provider &&
+      (
+        !data.auth_provider ||
+        data.auth_provider === 'unknown'
+      )
+    ) {
+      patch.auth_provider =
+        providerProfile.provider
+    }
+
+    if (Object.keys(patch).length) {
+      const {
+        data: updatedProfile,
+        error: updateError
+      } = await $supabase
+        .from('profiles')
+        .update(patch)
+        .eq('id', userId)
+        .select('*')
+        .maybeSingle()
+
+      if (!updateError && updatedProfile) {
+        profile.value = updatedProfile
+        return updatedProfile
+      }
+
+      if (updateError) {
+        console.warn(
+          '[Auth] Не удалось обновить профиль:',
+          updateError.message
+        )
+      }
     }
 
     profile.value = data
@@ -258,7 +369,9 @@ export function useAuth() {
     if (!$supabase) return
 
     const { error } =
-      await $supabase.auth.signOut()
+      await $supabase.auth.signOut({
+        scope: 'local'
+      })
 
     if (error) {
       authError.value = error.message

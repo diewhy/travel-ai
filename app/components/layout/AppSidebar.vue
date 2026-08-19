@@ -111,7 +111,16 @@ defineEmits([
       @click="$emit('profile')"
     >
       <div class="side-user-avatar">
-        {{ userProfile.initials }}
+        <img
+          v-if="userProfile.avatarUrl"
+          :src="userProfile.avatarUrl"
+          :alt="userProfile.name"
+          referrerpolicy="no-referrer"
+        >
+
+        <span v-else>
+          {{ userProfile.initials }}
+        </span>
       </div>
 
       <div>

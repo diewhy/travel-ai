@@ -8,10 +8,18 @@ defineProps({
   progressPercent: {
     type: Number,
     default: 0
+  },
+
+  logoutLoading: {
+    type: Boolean,
+    default: false
   }
 })
 
-defineEmits(['close'])
+defineEmits([
+  'close',
+  'logout'
+])
 </script>
 
 <template>
@@ -30,13 +38,32 @@ defineEmits(['close'])
 
       <div class="profile-drawer-head">
         <div class="profile-drawer-avatar">
-          {{ userProfile.initials }}
+          <img
+            v-if="userProfile.avatarUrl"
+            :src="userProfile.avatarUrl"
+            :alt="userProfile.name"
+            referrerpolicy="no-referrer"
+          >
+
+          <span v-else>
+            {{ userProfile.initials }}
+          </span>
         </div>
 
-        <div>
+        <div class="profile-drawer-identity">
           <span>Личный кабинет</span>
           <h2>{{ userProfile.name }}</h2>
           <p>{{ userProfile.role }}</p>
+
+          <div class="profile-auth-meta">
+            <small v-if="userProfile.authProvider">
+              {{ userProfile.authProvider }}
+            </small>
+
+            <small v-if="userProfile.email">
+              {{ userProfile.email }}
+            </small>
+          </div>
         </div>
       </div>
 
@@ -113,6 +140,19 @@ defineEmits(['close'])
           +15 баллов
         </div>
       </section>
+
+      <button
+        type="button"
+        class="profile-logout-btn"
+        :disabled="logoutLoading"
+        @click="$emit('logout')"
+      >
+        {{
+          logoutLoading
+            ? 'Выходим…'
+            : 'Выйти из аккаунта'
+        }}
+      </button>
     </aside>
   </div>
 </template>

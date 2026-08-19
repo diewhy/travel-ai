@@ -10,8 +10,7 @@ export default defineNuxtPlugin(() => {
     if (import.meta.dev) {
       console.warn(
         '[Supabase] NUXT_PUBLIC_SUPABASE_URL / ' +
-        'NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY не заданы. ' +
-        'Приложение продолжит работать без авторизации.'
+        'NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY не заданы.'
       )
     }
 
@@ -29,7 +28,8 @@ export default defineNuxtPlugin(() => {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true
+        detectSessionInUrl: true,
+        flowType: 'pkce'
       }
     }
   )

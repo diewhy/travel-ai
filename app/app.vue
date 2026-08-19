@@ -10,11 +10,13 @@ import RouteStopModal from '~/components/route/RouteStopModal.vue'
 import RoutePlanner from '~/components/planner/RoutePlanner.vue'
 import HomeOverview from '~/components/home/HomeOverview.vue'
 import SavedRoutes from '~/components/route/SavedRoutes.vue'
+import AuthModal from '~/components/auth/AuthModal.vue'
 import { useRoutes } from './composables/useRoutes.js'
 import { useAudioGuide } from './composables/useAudioGuide.js'
 import { useRouteProgress } from './composables/useRouteProgress.js'
 import { useUserProfile } from './composables/useUserProfile.js'
 import { useNavigation } from './composables/useNavigation.js'
+import { useAuth } from './composables/useAuth.js'
 import { cities } from '../data/cities.js'
 
 const {
@@ -85,6 +87,97 @@ const {
   closeProfilePanel
 } = useUserProfile()
 
+const showAuthModal = ref(false)
+const authLoading = ref(false)
+
+const {
+  user,
+  profile: authProfile,
+  authReady,
+  authError,
+  isAuthenticated,
+  signInWithCustomProvider
+} = useAuth()
+
+function getInitials(name) {
+  const parts = String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+
+  if (!parts.length) return 'Г'
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('')
+}
+
+function setGuestProfile() {
+  userProfile.value = {
+    ...userProfile.value,
+    name: 'Гость',
+    initials: 'Г',
+    role: 'Войдите через Яндекс',
+    level: 1,
+    points: 0,
+    nextLevelPoints: 600,
+    routesCompleted: 0,
+    tasksCompleted: 0,
+    photosUploaded: 0,
+    reviewsLeft: 0
+  }
+}
+
+function syncAuthenticatedProfile() {
+  if (!user.value) {
+    setGuestProfile()
+    return
+  }
+
+  const dbProfile = authProfile.value || {}
+  const metadata = user.value.user_metadata || {}
+  const identityData =
+    user.value.identities?.[0]?.identity_data || {}
+
+  const name =
+    dbProfile.display_name ||
+    identityData.real_name ||
+    identityData.display_name ||
+    identityData.name ||
+    metadata.full_name ||
+    metadata.name ||
+    metadata.display_name ||
+    user.value.email?.split('@')[0] ||
+    'Путешественник'
+
+  const level = Number(dbProfile.level || 1)
+
+  userProfile.value = {
+    ...userProfile.value,
+    name,
+    initials: getInitials(name),
+    role: 'Участник проекта',
+    level,
+    points: Number(dbProfile.points || 0),
+    nextLevelPoints: Math.max(600, level * 600),
+    routesCompleted: Number(dbProfile.routes_completed || 0),
+    tasksCompleted: Number(dbProfile.tasks_completed || 0),
+    photosUploaded: Number(dbProfile.photos_uploaded || 0),
+    reviewsLeft: Number(dbProfile.reviews_left || 0)
+  }
+}
+
+setGuestProfile()
+
+watch(
+  [user, authProfile],
+  () => {
+    syncAuthenticatedProfile()
+  },
+  { immediate: true }
+)
+
 const {
   showWelcomeScreen,
   enterPlatform,
@@ -94,7 +187,7 @@ const {
   sidebarCreateRoute,
   sidebarMap,
   sidebarArt,
-  sidebarProfile
+  sidebarProfile: openSidebarProfile
 } = useNavigation({
   showPlanner,
   routeMode,
@@ -107,6 +200,88 @@ const {
 })
 
 const cityGroups = cities
+
+function handleEnterPlatform() {
+  if (!authReady.value) return
+
+  if (isAuthenticated.value) {
+    enterPlatform()
+    return
+  }
+
+  showAuthModal.value = true
+}
+
+function handleSidebarProfile() {
+  if (!isAuthenticated.value) {
+    showAuthModal.value = true
+    return
+  }
+
+  openSidebarProfile()
+}
+
+async function signInWithYandex() {
+  authLoading.value = true
+
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(
+        'open-russia-auth-intent',
+        'enter'
+      )
+    }
+
+    await signInWithCustomProvider(
+      'custom:yandex',
+      {
+        redirectTo:
+          typeof window !== 'undefined'
+            ? window.location.origin
+            : undefined
+      }
+    )
+  } catch (error) {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(
+        'open-russia-auth-intent'
+      )
+    }
+
+    console.error(
+      '[Auth] Ошибка входа через Яндекс:',
+      error
+    )
+
+    authLoading.value = false
+  }
+}
+
+watch(
+  [authReady, isAuthenticated],
+  ([ready, authenticated]) => {
+    if (!ready || !authenticated) return
+
+    syncAuthenticatedProfile()
+
+    if (typeof window === 'undefined') return
+
+    const intent = localStorage.getItem(
+      'open-russia-auth-intent'
+    )
+
+    if (intent === 'enter') {
+      localStorage.removeItem(
+        'open-russia-auth-intent'
+      )
+
+      showAuthModal.value = false
+      authLoading.value = false
+      enterPlatform()
+    }
+  },
+  { immediate: true }
+)
 
 function startCurrentRoute() {
   if (!nextRouteStop.value) return
@@ -124,8 +299,15 @@ function closeRouteStop() {
   <div class="page">
   <WelcomeScreen
   v-if="showWelcomeScreen"
-  @enter="enterPlatform"
+  @enter="handleEnterPlatform"
   @preview="enterPlatformWithRoute"
+/>
+<AuthModal
+  v-if="showAuthModal"
+  :loading="authLoading"
+  :error-message="authError"
+  @close="showAuthModal = false"
+  @yandex="signInWithYandex"
 />
 <template v-else>
   <AppSidebar
@@ -135,7 +317,7 @@ function closeRouteStop() {
   @map="sidebarMap"
   @create-route="sidebarCreateRoute"
   @art="sidebarArt"
-  @profile="sidebarProfile"
+  @profile="handleSidebarProfile"
 />
 
 <ProfileDrawer

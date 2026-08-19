@@ -38,6 +38,90 @@ export function useAuth() {
     return Boolean(user.value)
   })
 
+  function cleanAuthParams() {
+    if (typeof window === 'undefined') return
+
+    const url = new URL(window.location.href)
+
+    const authParams = [
+      'code',
+      'error',
+      'error_code',
+      'error_description'
+    ]
+
+    authParams.forEach((key) => {
+      url.searchParams.delete(key)
+    })
+
+    const cleanUrl =
+      url.pathname +
+      (url.searchParams.toString()
+        ? `?${url.searchParams.toString()}`
+        : '') +
+      url.hash
+
+    window.history.replaceState(
+      {},
+      document.title,
+      cleanUrl
+    )
+  }
+
+  function readAuthErrorFromUrl() {
+    if (typeof window === 'undefined') return ''
+
+    const url = new URL(window.location.href)
+    const hash = new URLSearchParams(
+      window.location.hash.replace(/^#/, '')
+    )
+
+    return (
+      url.searchParams.get('error_description') ||
+      url.searchParams.get('error') ||
+      hash.get('error_description') ||
+      hash.get('error') ||
+      ''
+    )
+  }
+
+  async function handleAuthCallback() {
+    if (!$supabase || typeof window === 'undefined') {
+      return
+    }
+
+    const callbackError = readAuthErrorFromUrl()
+
+    if (callbackError) {
+      authError.value = decodeURIComponent(
+        callbackError.replace(/\+/g, ' ')
+      )
+
+      cleanAuthParams()
+      return
+    }
+
+    const url = new URL(window.location.href)
+    const code = url.searchParams.get('code')
+
+    if (!code) return
+
+    const {
+      data,
+      error
+    } = await $supabase.auth.exchangeCodeForSession(code)
+
+    if (error) {
+      authError.value = error.message
+      return
+    }
+
+    session.value = data?.session || null
+    user.value = data?.session?.user || null
+
+    cleanAuthParams()
+  }
+
   async function loadProfile(userId = user.value?.id) {
     if (!$supabase || !userId) {
       profile.value = null
@@ -48,7 +132,7 @@ export function useAuth() {
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
 
     if (error) {
       authError.value = error.message
@@ -70,6 +154,8 @@ export function useAuth() {
       return
     }
 
+    await handleAuthCallback()
+
     const {
       data,
       error
@@ -89,15 +175,20 @@ export function useAuth() {
     const {
       data: listener
     } = $supabase.auth.onAuthStateChange(
-      async (_event, nextSession) => {
+      (_event, nextSession) => {
         session.value = nextSession
         user.value = nextSession?.user || null
 
-        if (user.value) {
-          await loadProfile(user.value.id)
-        } else {
+        if (!user.value) {
           profile.value = null
+          return
         }
+
+        const userId = user.value.id
+
+        setTimeout(() => {
+          loadProfile(userId)
+        }, 0)
       }
     )
 
@@ -111,10 +202,15 @@ export function useAuth() {
     provider,
     options = {}
   ) {
+    authError.value = ''
+
     if (!$supabase) {
-      throw new Error(
-        'Supabase не настроен. Заполните переменные окружения.'
+      const error = new Error(
+        'Supabase не подключён. Проверьте переменные в .env.'
       )
+
+      authError.value = error.message
+      throw error
     }
 
     const redirectTo =
@@ -132,13 +228,27 @@ export function useAuth() {
       provider,
       options: {
         ...options,
-        redirectTo
+        redirectTo,
+        skipBrowserRedirect: true
       }
     })
 
     if (error) {
       authError.value = error.message
       throw error
+    }
+
+    if (!data?.url) {
+      const error = new Error(
+        'Supabase не вернул OAuth URL для custom:yandex.'
+      )
+
+      authError.value = error.message
+      throw error
+    }
+
+    if (typeof window !== 'undefined') {
+      window.location.assign(data.url)
     }
 
     return data

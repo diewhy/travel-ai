@@ -173,7 +173,7 @@ export function useVkAuth() {
       error
     } = await $supabase.auth.verifyOtp({
       token_hash: tokenHash,
-      type: 'magiclink'
+      type: 'email'
     })
 
     if (error) {

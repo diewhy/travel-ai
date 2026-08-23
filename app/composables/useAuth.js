@@ -158,6 +158,8 @@ export function useAuth() {
       ''
 
     const provider =
+      metadata.auth_provider ||
+      metadata.provider ||
       authUser.app_metadata?.provider ||
       identity.provider ||
       ''
@@ -217,10 +219,8 @@ export function useAuth() {
 
     if (
       providerProfile.provider &&
-      (
-        !data.auth_provider ||
-        data.auth_provider === 'unknown'
-      )
+      data.auth_provider !==
+        providerProfile.provider
     ) {
       patch.auth_provider =
         providerProfile.provider

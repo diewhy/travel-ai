@@ -17,6 +17,7 @@ import { useRouteProgress } from './composables/useRouteProgress.js'
 import { useUserProfile } from './composables/useUserProfile.js'
 import { useNavigation } from './composables/useNavigation.js'
 import { useAuth } from './composables/useAuth.js'
+import { useVkAuth } from './composables/useVkAuth.js'
 import { cities } from '../data/cities.js'
 
 const {
@@ -101,6 +102,12 @@ const {
   signOut
 } = useAuth()
 
+const {
+  vkLoading,
+  vkError,
+  startVkLogin
+} = useVkAuth()
+
 function getInitials(name) {
   const parts = String(name || '')
     .trim()
@@ -182,10 +189,15 @@ function syncAuthenticatedProfile() {
     user.value.identities?.[0]?.provider ||
     ''
 
+  const providerText =
+    String(rawProvider).toLowerCase()
+
   const authProvider =
-    String(rawProvider).includes('yandex')
+    providerText.includes('yandex')
       ? 'Яндекс ID'
-      : rawProvider || 'OAuth'
+      : providerText.includes('vk')
+        ? 'VK ID'
+        : rawProvider || 'OAuth'
 
   const level = Number(dbProfile.level || 1)
 
@@ -297,6 +309,39 @@ async function handleSignOut() {
   }
 }
 
+async function signInWithVk() {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(
+        'open-russia-auth-intent',
+        'enter'
+      )
+    }
+
+    await startVkLogin()
+  } catch (error) {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(
+        'open-russia-auth-intent'
+      )
+    }
+
+    console.error(
+      '[Auth] Ошибка входа через VK:',
+      error
+    )
+  }
+}
+
+watch(
+  vkError,
+  (value) => {
+    if (value) {
+      showAuthModal.value = true
+    }
+  }
+)
+
 async function signInWithYandex() {
   authLoading.value = true
 
@@ -380,10 +425,12 @@ function closeRouteStop() {
 />
 <AuthModal
   v-if="showAuthModal"
-  :loading="authLoading"
-  :error-message="authError"
+  :yandex-loading="authLoading"
+  :vk-loading="vkLoading"
+  :error-message="authError || vkError"
   @close="showAuthModal = false"
   @yandex="signInWithYandex"
+  @vk="signInWithVk"
 />
 <template v-else>
   <AppSidebar

@@ -1,6 +1,11 @@
 <script setup>
 defineProps({
-  loading: {
+  yandexLoading: {
+    type: Boolean,
+    default: false
+  },
+
+  vkLoading: {
     type: Boolean,
     default: false
   },
@@ -13,7 +18,8 @@ defineProps({
 
 defineEmits([
   'close',
-  'yandex'
+  'yandex',
+  'vk'
 ])
 </script>
 
@@ -27,6 +33,7 @@ defineEmits([
         type="button"
         class="auth-modal-close"
         aria-label="Закрыть"
+        :disabled="yandexLoading || vkLoading"
         @click="$emit('close')"
       >
         ×
@@ -60,7 +67,7 @@ defineEmits([
       <button
         type="button"
         class="auth-provider-btn yandex"
-        :disabled="loading"
+        :disabled="yandexLoading || vkLoading"
         @click="$emit('yandex')"
       >
         <span class="auth-provider-icon">
@@ -69,7 +76,11 @@ defineEmits([
 
         <span>
           <strong>
-            {{ loading ? 'Переходим в Яндекс…' : 'Войти через Яндекс' }}
+            {{
+              yandexLoading
+                ? 'Переходим в Яндекс…'
+                : 'Войти через Яндекс'
+            }}
           </strong>
 
           <small>
@@ -81,15 +92,25 @@ defineEmits([
       <button
         type="button"
         class="auth-provider-btn vk"
-        disabled
+        :disabled="yandexLoading || vkLoading"
+        @click="$emit('vk')"
       >
         <span class="auth-provider-icon">
           VK
         </span>
 
         <span>
-          <strong>Войти через VK ID</strong>
-          <small>Подключим следующим шагом</small>
+          <strong>
+            {{
+              vkLoading
+                ? 'Переходим в VK ID…'
+                : 'Войти через VK ID'
+            }}
+          </strong>
+
+          <small>
+            Вход через официальный VK ID
+          </small>
         </span>
       </button>
 

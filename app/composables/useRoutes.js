@@ -50,6 +50,16 @@ export function useRoutes(options = {}) {
   })
 
   const routeDurationName = computed(() => {
+    if (currentReadyRouteId.value) {
+      const currentRoute = readyMoscowRoutes.find(
+        (item) => item.id === currentReadyRouteId.value
+      )
+
+      if (currentRoute?.variantLabel) {
+        return currentRoute.variantLabel
+      }
+    }
+
     if (routeDuration.value === 'short') return 'Короткий'
     if (routeDuration.value === 'day') return 'На день'
     if (routeDuration.value === 'long') return 'Несколько дней'
@@ -139,29 +149,41 @@ export function useRoutes(options = {}) {
     routeSummary.value = ''
 
     routeStops.value = route.mapPoints.map((point, index) => {
-      const content =
+      const fallback =
         moscowStopContent[point.name] || {
           description:
-            'Памятное место, включённое в военно-исторический маршрут по Москве.',
+            'Историческая точка, включённая в тематический маршрут по Москве.',
           task:
-            'Осмотрите объект и отметьте деталь, которая показалась наиболее значимой.'
+            'Осмотрите объект и отметьте деталь, которая лучше всего передаёт характер эпохи.'
         }
+
+      const description =
+        point.description ||
+        fallback.description
+
+      const task =
+        point.task ||
+        fallback.task
 
       return {
         ...point,
         id: `${route.id}-${index}`,
         number: index + 1,
-        description: content.description,
-        task: content.task,
+        description,
+        task,
         audio:
-          content.audio ||
-          `${point.name}. ${content.description} Это одна из точек военно-исторического маршрута по Москве. Осмотрите объект внимательно, обратите внимание на детали памятника, мемориала или музейного пространства. После осмотра выполните задание: ${content.task}`
+          point.audio ||
+          fallback.audio ||
+          `${point.name}. ${description} Это одна из точек исторического маршрута по Москве. Осмотрите объект внимательно и выполните задание: ${task}`
       }
     })
 
     mapPoints.value = routeStops.value.map((stop) => ({
       ...stop,
-      coords: [...stop.coords]
+      coords:
+        Array.isArray(stop.coords)
+          ? [...stop.coords]
+          : undefined
     }))
 
     options.loadRouteProgress?.(route.id)
@@ -177,6 +199,8 @@ export function useRoutes(options = {}) {
   }
 
   async function generateRoute() {
+    currentReadyRouteId.value = ''
+
     result.value =
       'Генерируем маршрут, подождите 10-20 секунд...'
 

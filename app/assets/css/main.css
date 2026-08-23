@@ -2487,12 +2487,12 @@ color: #7dd3fc;
 }
 
 .auth-provider-btn.yandex {
-  color: #111827;
-  background: white;
+  color: white;
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .auth-provider-btn.vk {
-  color: rgba(255, 255, 255, 0.78);
+  color: white;
   background: rgba(255, 255, 255, 0.07);
 }
 
@@ -2646,4 +2646,188 @@ color: #7dd3fc;
 .profile-logout-btn:disabled {
   cursor: wait;
   opacity: 0.65;
+}
+
+/* AUTH PROVIDER HOVER FIX */
+.auth-provider-btn.yandex:hover:not(:disabled),
+.auth-provider-btn.yandex:focus-visible:not(:disabled) {
+  color: #111827;
+  background: white;
+  transform: translateY(-1px);
+}
+
+.auth-provider-btn.vk:hover:not(:disabled),
+.auth-provider-btn.vk:focus-visible:not(:disabled) {
+  color: white;
+  background: #0077ff;
+  transform: translateY(-1px);
+}
+
+.auth-provider-btn:focus-visible {
+  outline: 2px solid rgba(125, 211, 252, 0.9);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   MOSCOW ERA ROUTE CATALOG
+   ========================================================= */
+
+.route-catalog-head p {
+  max-width: 720px;
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.55;
+}
+
+.route-duration-switch {
+  margin: 24px 0 22px;
+  padding: 6px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(125, 211, 252, 0.1);
+}
+
+.route-duration-switch button {
+  min-height: 64px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 15px;
+  color: rgba(255, 255, 255, 0.68);
+  background: transparent;
+  box-shadow: none;
+}
+
+.route-duration-switch button strong,
+.route-duration-switch button span {
+  display: block;
+}
+
+.route-duration-switch button strong {
+  font-size: 14px;
+}
+
+.route-duration-switch button span {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.62;
+}
+
+.route-duration-switch button.active {
+  color: #0f172a;
+  background: white;
+  box-shadow: 0 12px 30px rgba(2, 132, 199, 0.14);
+}
+
+.route-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.route-theme-card {
+  min-width: 0;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 24px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(15, 48, 94, 0.88),
+      rgba(5, 24, 55, 0.96)
+    );
+  border: 1px solid rgba(125, 211, 252, 0.11);
+  box-shadow: 0 20px 50px rgba(0, 13, 39, 0.24);
+}
+
+.route-theme-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(125, 211, 252, 0.24);
+}
+
+.route-theme-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.route-theme-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 22px;
+}
+
+.route-theme-epoch {
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: #bae6fd;
+  background: rgba(14, 165, 233, 0.1);
+  border: 1px solid rgba(125, 211, 252, 0.12);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.route-theme-card h3 {
+  margin: 18px 0 9px;
+  color: white;
+  font-size: 22px;
+  line-height: 1.16;
+}
+
+.route-theme-card > p {
+  margin: 0;
+  min-height: 50px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.route-theme-meta {
+  margin: 18px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.route-theme-meta span {
+  padding: 6px 9px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.065);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.route-theme-card .ready-card-btn {
+  width: 100%;
+  margin-top: auto;
+}
+
+@media (max-width: 760px) {
+  .route-theme-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .route-duration-switch {
+    grid-template-columns: 1fr;
+  }
+
+  .route-duration-switch button {
+    min-height: 54px;
+  }
+
+  .route-theme-card > p {
+    min-height: 0;
+  }
 }

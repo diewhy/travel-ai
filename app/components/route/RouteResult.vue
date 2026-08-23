@@ -1,6 +1,7 @@
 <script setup>
 defineProps({
   routeMode: { type: String, required: true },
+  routeTitle: { type: String, default: '' },
   place: { type: String, default: '' },
   routeDurationName: { type: String, default: '—' },
   budget: { type: [String, Number], default: '' },
@@ -43,7 +44,7 @@ defineEmits(['select-image', 'download-pdf'])
           {{
             routeMode === 'moscowArt'
               ? `🎨 Художественный маршрут: ${place || 'Москва'}`
-              : `Маршрут по направлению: ${place || 'Россия'}`
+              : routeTitle || `Маршрут по направлению: ${place || 'Россия'}`
           }}
         </h2>
       </div>
@@ -70,7 +71,7 @@ defineEmits(['select-image', 'download-pdf'])
         {{
           routeMode === 'moscowArt'
             ? '🎨 Что будем рисовать'
-            : '🎖️ Объекты военно-исторического наследия'
+            : '📍 Исторические точки маршрута'
         }}
       </h3>
 

@@ -48,7 +48,7 @@ export function useNavigation({
     showWelcomeScreen.value = false
 
     await nextTick()
-    await openReadyMoscowRoute('short')
+    await openReadyMoscowRoute('war-memory-short')
   }
 
   async function sidebarHome() {
@@ -78,7 +78,7 @@ export function useNavigation({
     closeProfilePanel?.()
 
     if (!result.value || !mapPoints.value.length) {
-      await openReadyMoscowRoute('short')
+      await openReadyMoscowRoute('war-memory-short')
     }
 
     await scrollToBlock('.map-card')

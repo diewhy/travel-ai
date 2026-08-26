@@ -335,8 +335,10 @@ async function uploadPhoto(event) {
             .toString(16)
             .slice(2)}`
 
+    // Storage object keys keep only ASCII-safe segments.
+    // The point relation itself is stored in point_photos.point_key.
     uploadedPath =
-      `${props.user.id}/${pointKey.value}/${randomId}.${extension}`
+      `${props.user.id}/${randomId}.${extension}`
 
     const {
       error: uploadError

@@ -19,7 +19,8 @@ defineProps({
 defineEmits([
   'close',
   'yandex',
-  'vk'
+  'vk',
+  'guest'
 ])
 </script>
 
@@ -112,6 +113,16 @@ defineEmits([
             Вход через официальный VK ID
           </small>
         </span>
+      </button>
+
+      <button
+        type="button"
+        class="auth-guest-btn"
+        :disabled="yandexLoading || vkLoading"
+        @click="$emit('guest')"
+      >
+        Продолжить как гость
+        <small>Без сохранения прогресса в аккаунте</small>
       </button>
 
       <p

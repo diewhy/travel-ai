@@ -113,6 +113,13 @@ function isStopVisited(stopId) {
         </div>
 
         <div>
+          <span
+            v-if="stop.day"
+            class="route-stop-day"
+          >
+            День {{ stop.day }}
+          </span>
+
           <h3>{{ stop.name }}</h3>
           <p>{{ stop.description }}</p>
         </div>

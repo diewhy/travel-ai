@@ -10,6 +10,7 @@ export function useNavigation({
   result,
   mapPoints,
   openReadyMoscowRoute,
+  switchRouteMode,
   closeProfilePanel,
   openProfilePanel
 }) {
@@ -60,7 +61,7 @@ export function useNavigation({
   }
 
   async function sidebarRoutes() {
-    routeMode.value = 'history'
+    switchRouteMode?.('history')
     showPlanner.value = false
     closeProfilePanel?.()
 
@@ -85,7 +86,7 @@ export function useNavigation({
   }
 
   async function sidebarArt() {
-    routeMode.value = 'moscowArt'
+    switchRouteMode?.('moscowArt')
     showPlanner.value = true
     place.value = ''
     closeProfilePanel?.()

@@ -84,6 +84,12 @@ const visibleThemeCards = computed(() =>
     .filter((theme) => theme.route)
 )
 
+const grandRoute = computed(() =>
+  props.readyRoutes.find(
+    (route) => route.catalogType === 'grand'
+  ) || null
+)
+
 const recommendedRoute = computed(() =>
   props.readyRoutes.find(
     (route) =>
@@ -325,6 +331,61 @@ const uniqueHistoricalPoints = computed(() => {
           Открыть {{ theme.route.variantLabel.toLowerCase() }} маршрут
         </button>
       </article>
+    </div>
+  </section>
+<section
+    v-if="
+      routeMode === 'history' &&
+      !showPlanner &&
+      grandRoute
+    "
+    class="grand-route-section"
+  >
+    <div class="grand-route-card">
+      <div class="grand-route-copy">
+        <span class="grand-route-kicker">
+          🚗 Москва → Подмосковье
+        </span>
+
+        <h2>{{ grandRoute.title }}</h2>
+
+        <p>{{ grandRoute.preview }}</p>
+
+        <div class="grand-route-meta">
+          <span>🗓 {{ grandRoute.duration }}</span>
+          <span>🚘 Автомобильный</span>
+          <span>🛣 {{ grandRoute.distance }}</span>
+          <span>
+            📍 {{ grandRoute.mapPoints.length }} точек
+          </span>
+        </div>
+      </div>
+
+      <div class="grand-route-side">
+        <span>Большой маршрут</span>
+
+        <strong>
+          Два исторических рубежа Москвы
+        </strong>
+
+        <p>
+          1812 год → Бородино → 1941 год →
+          Волоколамск и Дубосеково
+        </p>
+
+        <button
+          type="button"
+          class="grand-route-btn"
+          @click="
+            $emit(
+              'open-route',
+              grandRoute.id
+            )
+          "
+        >
+          Открыть маршрут
+        </button>
+      </div>
     </div>
   </section>
 </template>

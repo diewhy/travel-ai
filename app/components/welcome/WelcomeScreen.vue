@@ -1,4 +1,11 @@
 <script setup>
+defineProps({
+  guestMode: {
+    type: Boolean,
+    default: false
+  }
+})
+
 defineEmits(['enter', 'preview'])
 </script>
 
@@ -40,7 +47,7 @@ defineEmits(['enter', 'preview'])
           class="welcome-main-btn"
           @click="$emit('enter')"
         >
-          Войти в платформу
+          {{ guestMode ? 'Продолжить как гость' : 'Войти в платформу' }}
         </button>
 
         <button
@@ -54,13 +61,13 @@ defineEmits(['enter', 'preview'])
 
       <div class="welcome-features">
         <article>
-          <strong>3</strong>
-          <span>готовых маршрута</span>
+          <strong>10+</strong>
+          <span>готовых маршрутов</span>
         </article>
 
         <article>
-          <strong>23</strong>
-          <span>исторические точки</span>
+          <strong>70+</strong>
+          <span>исторических точек</span>
         </article>
 
         <article>

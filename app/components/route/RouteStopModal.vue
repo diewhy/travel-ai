@@ -1,4 +1,6 @@
 <script setup>
+import PointCommunity from './PointCommunity.vue'
+
 defineProps({
   stop: {
     type: Object,
@@ -8,13 +10,30 @@ defineProps({
   visited: {
     type: Boolean,
     default: false
+  },
+
+  user: {
+    type: Object,
+    default: null
+  },
+
+  userProfile: {
+    type: Object,
+    default: () => ({})
+  },
+
+  isAuthenticated: {
+    type: Boolean,
+    default: false
   }
 })
 
 defineEmits([
   'close',
   'play-audio',
-  'mark-visited'
+  'mark-visited',
+  'request-auth',
+  'profile-changed'
 ])
 </script>
 
@@ -33,6 +52,9 @@ defineEmits([
       </button>
 
       <span class="stop-modal-label">
+        <template v-if="stop.day">
+          День {{ stop.day }} ·
+        </template>
         Точка {{ stop.number }} маршрута
       </span>
 
@@ -71,6 +93,15 @@ defineEmits([
       >
         ✓ Точка пройдена
       </div>
+
+      <PointCommunity
+        :stop="stop"
+        :user="user"
+        :user-profile="userProfile"
+        :is-authenticated="isAuthenticated"
+        @request-auth="$emit('request-auth')"
+        @profile-changed="$emit('profile-changed')"
+      />
     </article>
   </div>
 </template>

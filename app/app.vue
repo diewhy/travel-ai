@@ -57,9 +57,12 @@ const {
   routeDurationName,
   currentGallery,
   activeRouteImage,
+  pdfLoading,
   readyMoscowRoutes,
   openReadyMoscowRoute,
   openRouteStop,
+  resetCurrentRoute,
+  switchRouteMode,
   closePlanner,
   generateRoute,
   setRouteImage,
@@ -91,6 +94,7 @@ const {
 const showAuthModal = ref(false)
 const authLoading = ref(false)
 const logoutLoading = ref(false)
+const guestMode = ref(false)
 
 const {
   user,
@@ -98,6 +102,7 @@ const {
   authReady,
   authError,
   isAuthenticated,
+  refreshProfile,
   signInWithCustomProvider,
   signOut
 } = useAuth()
@@ -130,7 +135,7 @@ function setGuestProfile() {
     avatarUrl: '',
     email: '',
     authProvider: '',
-    role: 'Войдите через Яндекс',
+    role: 'Гостевой режим',
     level: 1,
     points: 0,
     nextLevelPoints: 600,
@@ -246,6 +251,7 @@ const {
   result,
   mapPoints,
   openReadyMoscowRoute,
+  switchRouteMode,
   closeProfilePanel,
   openProfilePanel
 })
@@ -255,12 +261,45 @@ const cityGroups = cities
 function handleEnterPlatform() {
   if (!authReady.value) return
 
-  if (isAuthenticated.value) {
+  if (isAuthenticated.value || guestMode.value) {
     enterPlatform()
     return
   }
 
   showAuthModal.value = true
+}
+
+async function handleGuestEntry() {
+  guestMode.value = true
+  showAuthModal.value = false
+  setGuestProfile()
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(
+      'open-russia-guest-mode',
+      '1'
+    )
+  }
+
+  await enterPlatform()
+}
+
+function showHistoryMode() {
+  switchRouteMode('history')
+  showPlanner.value = false
+  place.value = ''
+}
+
+function showArtMode() {
+  switchRouteMode('moscowArt')
+  showPlanner.value = true
+  place.value = ''
+}
+
+function handleRouteModeChange(mode) {
+  switchRouteMode(mode)
+  showPlanner.value = true
+  place.value = ''
 }
 
 function handleSidebarProfile() {
@@ -270,6 +309,37 @@ function handleSidebarProfile() {
   }
 
   openSidebarProfile()
+}
+
+function handleCommunityAuth() {
+  if (typeof window !== 'undefined') {
+    if (currentReadyRouteId.value) {
+      localStorage.setItem(
+        'open-russia-community-route',
+        currentReadyRouteId.value
+      )
+    }
+
+    if (activeStop.value?.name) {
+      localStorage.setItem(
+        'open-russia-community-stop',
+        activeStop.value.name
+      )
+    }
+  }
+
+  showAuthModal.value = true
+}
+
+async function handleCommunityProfileChanged() {
+  try {
+    await refreshProfile()
+  } catch (error) {
+    console.warn(
+      '[Community] Не удалось обновить профиль:',
+      error
+    )
+  }
 }
 
 async function handleSignOut() {
@@ -284,10 +354,14 @@ async function handleSignOut() {
       localStorage.removeItem(
         'open-russia-auth-intent'
       )
+      localStorage.removeItem(
+        'open-russia-guest-mode'
+      )
     }
 
     closeProfilePanel()
     showAuthModal.value = false
+    guestMode.value = false
     setGuestProfile()
     showWelcomeScreen.value = true
 
@@ -380,24 +454,75 @@ async function signInWithYandex() {
 
 watch(
   [authReady, isAuthenticated],
-  ([ready, authenticated]) => {
-    if (!ready || !authenticated) return
+  async ([ready, authenticated]) => {
+    if (!ready || typeof window === 'undefined') return
 
-    syncAuthenticatedProfile()
-
-    if (typeof window === 'undefined') return
-
-    const intent = localStorage.getItem(
-      'open-russia-auth-intent'
-    )
-
-    if (intent === 'enter') {
+    if (authenticated) {
+      guestMode.value = false
       localStorage.removeItem(
+        'open-russia-guest-mode'
+      )
+
+      syncAuthenticatedProfile()
+
+      const intent = localStorage.getItem(
         'open-russia-auth-intent'
       )
 
+      if (intent === 'enter') {
+        localStorage.removeItem(
+          'open-russia-auth-intent'
+        )
+
+        const communityRoute =
+          localStorage.getItem(
+            'open-russia-community-route'
+          ) || ''
+
+        const communityStop =
+          localStorage.getItem(
+            'open-russia-community-stop'
+          ) || ''
+
+        localStorage.removeItem(
+          'open-russia-community-route'
+        )
+        localStorage.removeItem(
+          'open-russia-community-stop'
+        )
+
+        showAuthModal.value = false
+        authLoading.value = false
+        await enterPlatform()
+
+        if (communityRoute) {
+          await openReadyMoscowRoute(
+            communityRoute
+          )
+
+          if (communityStop) {
+            const stop = routeStops.value.find(
+              (item) =>
+                item.name === communityStop
+            )
+
+            if (stop) {
+              activeStop.value = stop
+            }
+          }
+        }
+      }
+
+      return
+    }
+
+    if (
+      localStorage.getItem(
+        'open-russia-guest-mode'
+      ) === '1'
+    ) {
+      guestMode.value = true
       showAuthModal.value = false
-      authLoading.value = false
       enterPlatform()
     }
   },
@@ -418,124 +543,139 @@ function closeRouteStop() {
 
 <template>
   <div class="page">
-  <WelcomeScreen
-  v-if="showWelcomeScreen"
-  @enter="handleEnterPlatform"
-  @preview="enterPlatformWithRoute"
-/>
-<AuthModal
-  v-if="showAuthModal"
-  :yandex-loading="authLoading"
-  :vk-loading="vkLoading"
-  :error-message="authError || vkError"
-  @close="showAuthModal = false"
-  @yandex="signInWithYandex"
-  @vk="signInWithVk"
-/>
-<template v-else>
-  <AppSidebar
-  :user-profile="userProfile"
-  @home="sidebarHome"
-  @routes="sidebarRoutes"
-  @map="sidebarMap"
-  @create-route="sidebarCreateRoute"
-  @art="sidebarArt"
-  @profile="handleSidebarProfile"
-/>
+    <WelcomeScreen
+      v-if="showWelcomeScreen"
+      :guest-mode="guestMode"
+      @enter="handleEnterPlatform"
+      @preview="enterPlatformWithRoute"
+    />
 
-<ProfileDrawer
-  v-if="showProfilePanel"
-  :user-profile="userProfile"
-  :progress-percent="profileProgressPercent"
-  :logout-loading="logoutLoading"
-  @close="closeProfilePanel"
-  @logout="handleSignOut"
-/>
+    <template v-else>
+      <AppSidebar
+        :user-profile="userProfile"
+        @home="sidebarHome"
+        @routes="sidebarRoutes"
+        @map="sidebarMap"
+        @create-route="sidebarCreateRoute"
+        @art="sidebarArt"
+        @profile="handleSidebarProfile"
+      />
 
-<main class="new-home">
-  <HomeOverview
-    :route-mode="routeMode"
-    :show-planner="showPlanner"
-    :ready-routes="readyMoscowRoutes"
-    @show-history="routeMode = 'history'; showPlanner = false"
-    @show-planner="showPlanner = true"
-    @show-art="routeMode = 'moscowArt'; showPlanner = true; place = ''"
-    @open-route="openReadyMoscowRoute"
-  />
+      <ProfileDrawer
+        v-if="showProfilePanel"
+        :user-profile="userProfile"
+        :progress-percent="profileProgressPercent"
+        :logout-loading="logoutLoading"
+        @close="closeProfilePanel"
+        @logout="handleSignOut"
+      />
 
-  <RoutePlanner
-  v-if="showPlanner"
-  :route-mode="routeMode"
-  :place="place"
-  :route-duration="routeDuration"
-  :days="days"
-  :budget="budget"
-  :city-groups="cityGroups"
-  @close="closePlanner"
-  @update:route-mode="routeMode = $event"
-  @update:place="place = $event"
-  @update:route-duration="routeDuration = $event"
-  @update:days="days = $event"
-  @update:budget="budget = $event"
-  @generate="generateRoute"
-/>
+      <main class="new-home">
+        <HomeOverview
+          :route-mode="routeMode"
+          :show-planner="showPlanner"
+          :ready-routes="readyMoscowRoutes"
+          @show-history="showHistoryMode"
+          @show-planner="showPlanner = true"
+          @show-art="showArtMode"
+          @open-route="openReadyMoscowRoute"
+        />
 
-</main>
+        <RoutePlanner
+          v-if="showPlanner"
+          :route-mode="routeMode"
+          :route-title="routeTitle"
+          :place="place"
+          :route-duration="routeDuration"
+          :days="days"
+          :budget="budget"
+          :city-groups="cityGroups"
+          @close="closePlanner"
+          @update:route-mode="handleRouteModeChange"
+          @update:place="place = $event"
+          @update:route-duration="routeDuration = $event"
+          @update:days="days = $event"
+          @update:budget="budget = $event"
+          @generate="generateRoute"
+        />
+      </main>
 
-    <RouteResult
-  v-if="result"
-  :route-mode="routeMode"
-  :place="place"
-  :route-duration-name="routeDurationName"
-  :budget="budget"
-  :active-route-image="activeRouteImage"
-  :current-gallery="currentGallery"
-  :active-image-index="activeImageIndex"
-  :history="history"
-  :memory-places="memoryPlaces"
-  :pleinairs="pleinairs"
-  :formatted-result="formattedResult"
-  @select-image="setRouteImage"
-  @download-pdf="downloadPdf"
-/>
+      <RouteResult
+        v-if="result"
+        :route-mode="routeMode"
+        :route-title="routeTitle"
+        :route-about="routeAbout"
+        :place="place"
+        :days="days"
+        :route-duration-name="routeDurationName"
+        :route-points-count="routeStops.length || mapPoints.length"
+        :map-travel-mode="mapTravelMode"
+        :active-route-image="activeRouteImage"
+        :current-gallery="currentGallery"
+        :active-image-index="activeImageIndex"
+        :history="history"
+        :memory-places="memoryPlaces"
+        :pleinairs="pleinairs"
+        :formatted-result="formattedResult"
+        :show-generated-text="!currentReadyRouteId"
+        :pdf-loading="pdfLoading"
+        @select-image="setRouteImage"
+        @download-pdf="downloadPdf"
+      />
 
-<YandexMap
-  v-if="result && mapPoints.length"
-  :key="routeTitle + '-' + mapPoints.length"
-  :place="place"
-  :points="mapPoints"
-  @select-point="openRouteStop"
-/>
+      <YandexMap
+        v-if="result && mapPoints.length"
+        :key="routeTitle + '-' + mapPoints.length"
+        :place="place"
+        :points="mapPoints"
+        :travel-mode="mapTravelMode"
+        @select-point="openRouteStop"
+      />
 
-<RouteStops
-  v-if="routeStops.length"
-  :route-stops="routeStops"
-  :visited-stop-ids="visitedStopIds"
-  :route-progress-percent="routeProgressPercent"
-  :route-duration-name="routeDurationName"
-  @start-route="startCurrentRoute"
-  @open-stop="openRouteStop"
-/>
+      <RouteStops
+        v-if="routeStops.length"
+        :route-stops="routeStops"
+        :visited-stop-ids="visitedStopIds"
+        :route-progress-percent="routeProgressPercent"
+        :route-duration-name="routeDurationName"
+        @start-route="startCurrentRoute"
+        @open-stop="openRouteStop"
+      />
 
-<SavedRoutes
-  v-if="savedRoutes.length"
-  :routes="savedRoutes"
-  @open-route="openSavedRoute"
-  @delete-route="deleteSavedRoute"
-/>
+      <SavedRoutes
+        v-if="savedRoutes.length"
+        :routes="savedRoutes"
+        @open-route="openSavedRoute"
+        @delete-route="deleteSavedRoute"
+      />
 
-<RouteStopModal
-  v-if="activeStop"
-  :stop="activeStop"
-  :visited="isStopVisited(activeStop.id)"
-  @close="closeRouteStop"
-  @play-audio="playStopAudio"
-  @mark-visited="markStopVisited"
-/>
-</template>
+      <RouteStopModal
+        v-if="activeStop"
+        :stop="activeStop"
+        :visited="isStopVisited(activeStop.id)"
+        :user="user"
+        :user-profile="userProfile"
+        :is-authenticated="isAuthenticated"
+        @close="closeRouteStop"
+        @play-audio="playStopAudio"
+        @mark-visited="markStopVisited"
+        @request-auth="handleCommunityAuth"
+        @profile-changed="handleCommunityProfileChanged"
+      />
+    </template>
+
+    <AuthModal
+      v-if="showAuthModal"
+      :yandex-loading="authLoading"
+      :vk-loading="vkLoading"
+      :error-message="authError || vkError"
+      @close="showAuthModal = false"
+      @yandex="signInWithYandex"
+      @vk="signInWithVk"
+      @guest="handleGuestEntry"
+    />
   </div>
 </template>
-
 
 <style src="./assets/css/main.css"></style>
 

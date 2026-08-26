@@ -1,20 +1,33 @@
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   routeMode: { type: String, required: true },
   routeTitle: { type: String, default: '' },
+  routeAbout: { type: String, default: '' },
   place: { type: String, default: '' },
+  days: { type: [String, Number], default: '' },
   routeDurationName: { type: String, default: '—' },
-  budget: { type: [String, Number], default: '' },
+  routePointsCount: { type: Number, default: 0 },
+  mapTravelMode: { type: String, default: 'pedestrian' },
   activeRouteImage: { type: String, default: '' },
   currentGallery: { type: Array, default: () => [] },
   activeImageIndex: { type: Number, default: 0 },
   history: { type: String, default: '' },
   memoryPlaces: { type: Array, default: () => [] },
   pleinairs: { type: Array, default: () => [] },
-  formattedResult: { type: String, default: '' }
+  formattedResult: { type: String, default: '' },
+  showGeneratedText: { type: Boolean, default: true },
+  pdfLoading: { type: Boolean, default: false }
 })
 
 defineEmits(['select-image', 'download-pdf'])
+
+const transportName = computed(() =>
+  props.mapTravelMode === 'auto'
+    ? 'Автомобильный'
+    : 'Пеший'
+)
 </script>
 
 <template>
@@ -22,8 +35,7 @@ defineEmits(['select-image', 'download-pdf'])
     <div
       class="route-header route-header-image"
       :style="{
-        backgroundImage:
-          `linear-gradient(rgba(5,15,35,.35), rgba(5,15,35,.88)), url(${activeRouteImage})`
+        backgroundImage: `url('${activeRouteImage}')`
       }"
     >
       <div class="route-gallery-dots">
@@ -33,45 +45,63 @@ defineEmits(['select-image', 'download-pdf'])
           type="button"
           class="gallery-line"
           :class="{ active: activeImageIndex === index }"
+          :aria-label="`Фото ${index + 1}`"
           @click="$emit('select-image', index)"
         ></button>
       </div>
 
-      <div>
-        <p class="route-label">Ваш маршрут готов</p>
+      <div class="route-hero-copy">
+        <p class="route-label">
+          {{
+            routeMode === 'moscowArt'
+              ? 'Творческий маршрут'
+              : 'Готовый исторический маршрут'
+          }}
+        </p>
 
         <h2>
           {{
             routeMode === 'moscowArt'
-              ? `🎨 Художественный маршрут: ${place || 'Москва'}`
-              : routeTitle || `Маршрут по направлению: ${place || 'Россия'}`
+              ? `Москва в красках: ${place || 'Москва'}`
+              : routeTitle || `Маршрут: ${place || 'Россия'}`
           }}
         </h2>
-      </div>
 
-      <div class="route-stats">
-        <span>📅 {{ routeDurationName }}</span>
-        <span>💰 {{ budget || '—' }} ₽</span>
+        <p
+          v-if="routeAbout || history"
+          class="route-hero-description"
+        >
+          {{ routeAbout || history }}
+        </p>
+
+        <div class="route-stats">
+          <span>⏱ {{ routeDurationName }}</span>
+          <span v-if="routePointsCount">📍 {{ routePointsCount }} точек</span>
+          <span>🧭 {{ transportName }}</span>
+          <span v-if="Number(days) > 1">🗓 {{ days }} дня</span>
+        </div>
       </div>
     </div>
 
-    <div v-if="history" class="history-card">
+    <div v-if="history" class="history-card route-story-card">
+      <span class="route-card-kicker">Погружение в эпоху</span>
       <h3>
         {{
           routeMode === 'moscowArt'
             ? '🏛️ О локации'
-            : '📖 Историческая справка'
+            : '📖 История маршрута'
         }}
       </h3>
       <p>{{ history }}</p>
     </div>
 
     <div v-if="memoryPlaces.length" class="memory-card">
+      <span class="route-card-kicker">Что увидим</span>
       <h3>
         {{
           routeMode === 'moscowArt'
             ? '🎨 Что будем рисовать'
-            : '📍 Исторические точки маршрута'
+            : '📍 Главные точки маршрута'
         }}
       </h3>
 
@@ -107,14 +137,38 @@ defineEmits(['select-image', 'download-pdf'])
       </div>
     </div>
 
-    <div class="result" v-html="formattedResult"></div>
+    <section
+      v-if="showGeneratedText && formattedResult"
+      class="generated-route-details"
+    >
+      <div class="generated-route-details-head">
+        <span class="route-card-kicker">
+          Персональный маршрут
+        </span>
+        <h3>Подробный план путешествия</h3>
+        <p>
+          План, рекомендации и детали,
+          подготовленные для выбранного формата.
+        </p>
+      </div>
+
+      <div
+        class="result generated-route-text"
+        v-html="formattedResult"
+      ></div>
+    </section>
 
     <button
       type="button"
       class="pdf-btn"
+      :disabled="pdfLoading"
       @click="$emit('download-pdf')"
     >
-      📄 Скачать PDF
+      {{
+        pdfLoading
+          ? 'Формируем PDF…'
+          : '📄 Скачать красивый PDF'
+      }}
     </button>
   </section>
 </template>

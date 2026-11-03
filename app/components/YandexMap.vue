@@ -176,7 +176,7 @@ async function drawPoints() {
         balloonContent: `<strong>${index + 1}. ${point.name}</strong>`
       },
       {
-        preset: 'islands#blueCircleIcon',
+        preset: 'islands#greenCircleIcon',
         zIndex: 1000
       }
     )
@@ -193,7 +193,7 @@ async function drawPoints() {
       validPoints.map((point) => point.coords),
       {},
       {
-        strokeColor: '#0284c7',
+        strokeColor: '#078b7c',
         strokeWidth: 6,
         strokeOpacity: 0.9
       }
@@ -254,43 +254,50 @@ watch(
 </script>
 
 <template>
-  <section class="map-card">
-    <h2>Карта путешествия</h2>
+  <section
+    class="rp2-map"
+    aria-label="Карта путешествия"
+    style="display:block;box-sizing:border-box;width:100%;max-width:1220px;min-height:0;margin:0 auto 22px;padding:22px;border:1px solid #e0e9ed;border-radius:20px;background:#ffffff;color:#193347;"
+  >
+    <div class="rp2-map__header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:16px;">
+      <div class="rp2-map__heading">
+        <p class="rp2-map__eyebrow" style="margin:0 0 5px;color:#078b7c;font-size:11px;font-weight:800;letter-spacing:.08em;">ИССЛЕДУЙТЕ МАРШРУТ</p>
+        <h2 style="margin:0 0 6px;color:#193347;font-size:clamp(21px,2.5vw,29px);line-height:1.2;">Карта путешествия</h2>
+        <p style="margin:0;color:#667c8b;font-size:12px;">Выберите метку на карте, чтобы открыть достопримечательность.</p>
+      </div>
+      <div class="rp2-map__badges" style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
+        <span class="rp2-map__badge" style="display:inline-flex;align-items:center;min-height:33px;padding:6px 11px;border:1px solid #dcece8;border-radius:999px;background:#f0f8f6;color:#176b60;font-size:12px;font-weight:700;white-space:nowrap;">
+          Точек: {{ points.length }}
+        </span>
+        <span class="rp2-map__badge" style="display:inline-flex;align-items:center;min-height:33px;padding:6px 11px;border:1px solid #dcece8;border-radius:999px;background:#f0f8f6;color:#176b60;font-size:12px;font-weight:700;white-space:nowrap;">
+          {{ travelMode === 'auto' ? 'Автомобильный' : 'Пеший' }}
+        </span>
+      </div>
+    </div>
 
-    <div 
-      ref="mapEl"
-      class="yandex-map"
-      style="width: 100%; height: 420px; min-height: 420px; display: block; border-radius: 22px; overflow: hidden; background: rgba(255,255,255,.25); border: 2px solid rgba(255,255,255,.35);"
-    >
-  </div>
+    <div class="rp2-map__frame" style="box-sizing:border-box;width:100%;min-width:0;overflow:hidden;border:1px solid #dce7e9;border-radius:15px;background:#edf4f3;">
+      <div
+        ref="mapEl"
+        class="rp2-map__canvas"
+        style="display:block;position:relative;box-sizing:border-box;width:100%;height:440px;min-height:440px;overflow:hidden;background:#edf4f3;"
+      ></div>
+    </div>
+
+    <div class="rp2-map__footer" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-top:12px;color:#738694;font-size:11px;line-height:1.5;">
+      <span>Номера меток соответствуют порядку остановок.</span>
+      <span>Линия соединяет точки напрямую, не по дорогам.</span>
+    </div>
   </section>
 </template>
 
 <style scoped>
-.map-card {
-  max-width: 1180px;
-  margin: 40px auto;
-  padding: 24px;
-  border-radius: 28px;
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.18);
-  backdrop-filter: blur(16px);
-  color: white;
-  display: block;
-  min-height: 520px;
-}
-
-.map-card h2 {
-  margin: 0 0 18px;
-}
-
-.yandex-map {
-  width: 100%;
-  height: 420px;
-  min-height: 420px;
-  display: block;
-  border-radius: 22px;
-  overflow: hidden;
-  background: rgba(255,255,255,.18);
+.rp2-map { box-shadow: 0 12px 35px rgba(20,52,67,.05); }
+.rp2-map__heading { min-width: 0; flex: 1 1 280px; }
+.rp2-map__heading h2 { letter-spacing: -.03em; font-weight: 800; }
+.rp2-map__canvas { isolation: isolate; }
+@media (max-width: 650px) {
+  .rp2-map { padding: 14px !important; border-radius: 16px !important; }
+  .rp2-map__canvas { height: 340px !important; min-height: 340px !important; }
+  .rp2-map__header { align-items: flex-start !important; }
 }
 </style>

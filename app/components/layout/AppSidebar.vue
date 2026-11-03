@@ -1,4 +1,6 @@
 <script setup>
+import AppIcon from '../ui/AppIcon.vue'
+
 defineProps({
   userProfile: {
     type: Object,
@@ -40,7 +42,7 @@ defineEmits([
         class="side-nav-btn active"
         @click="$emit('home')"
       >
-        <span>⌂</span>
+        <AppIcon name="house" />
         Главная
       </button>
 
@@ -49,7 +51,7 @@ defineEmits([
         class="side-nav-btn"
         @click="$emit('routes')"
       >
-        <span>🧭</span>
+        <AppIcon name="compass" />
         Маршруты
       </button>
 
@@ -58,7 +60,7 @@ defineEmits([
         class="side-nav-btn"
         @click="$emit('map')"
       >
-        <span>📍</span>
+        <AppIcon name="map-pin" />
         Карта
       </button>
 
@@ -67,7 +69,7 @@ defineEmits([
         class="side-nav-btn"
         @click="$emit('create-route')"
       >
-        <span>✦</span>
+        <AppIcon name="route" />
         Создать маршрут
       </button>
 
@@ -76,7 +78,7 @@ defineEmits([
         class="side-nav-btn"
         @click="$emit('art')"
       >
-        <span>🎨</span>
+        <AppIcon name="palette" />
         Москва в красках
       </button>
 
@@ -85,7 +87,7 @@ defineEmits([
         class="side-nav-btn"
         @click="$emit('profile')"
       >
-        <span>👤</span>
+        <AppIcon name="user-round" />
         Личный кабинет
       </button>
     </nav>

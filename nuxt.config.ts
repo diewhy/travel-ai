@@ -2,6 +2,12 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
 
+  // Global styles are bundled and served as a regular CSS asset.
+  css: ['~/assets/css/main.css'],
+
+  // Avoid inlining component styles into SSR HTML on production.
+  features: { inlineStyles: false },
+
   runtimeConfig: {
     openaiApiKey: process.env.OPENAI_API_KEY,
 

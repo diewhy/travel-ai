@@ -677,5 +677,4 @@ function closeRouteStop() {
   </div>
 </template>
 
-<style src="./assets/css/main.css"></style>
 

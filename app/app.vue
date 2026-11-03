@@ -9,6 +9,7 @@ import RouteStops from '~/components/route/RouteStops.vue'
 import RouteStopModal from '~/components/route/RouteStopModal.vue'
 import RoutePlanner from '~/components/planner/RoutePlanner.vue'
 import HomeOverview from '~/components/home/HomeOverview.vue'
+import AccessibleRoutes from '~/components/accessibility/AccessibleRoutes.vue'
 import SavedRoutes from '~/components/route/SavedRoutes.vue'
 import AuthModal from '~/components/auth/AuthModal.vue'
 import { useRoutes } from './composables/useRoutes.js'
@@ -95,6 +96,7 @@ const showAuthModal = ref(false)
 const authLoading = ref(false)
 const logoutLoading = ref(false)
 const guestMode = ref(false)
+const showAccessibleRoutes = ref(false)
 
 const {
   user,
@@ -256,6 +258,33 @@ const {
   openProfilePanel
 })
 
+// Доступный туризм — отдельный экран, не изменяющий данные готовых маршрутов.
+async function openAccessibleRoutes() {
+  showAccessibleRoutes.value = true
+  showPlanner.value = false
+  activeStop.value = null
+  closeProfilePanel()
+  await nextTick()
+  if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+async function handleSidebarNavigation(section) {
+  showAccessibleRoutes.value = false
+  await nextTick()
+  if (section === 'home') return sidebarHome()
+  if (section === 'routes') {
+    await sidebarRoutes()
+    // Новый HomeOverview использует .rp-catalog вместо старого класса.
+    if (typeof document !== 'undefined') {
+      document.querySelector('.rp-catalog')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    return
+  }
+  if (section === 'map') return sidebarMap()
+  if (section === 'create-route') return sidebarCreateRoute()
+  if (section === 'art') return sidebarArt()
+}
+
 const cityGroups = cities
 
 function handleEnterPlatform() {
@@ -363,6 +392,7 @@ async function handleSignOut() {
     showAuthModal.value = false
     guestMode.value = false
     setGuestProfile()
+    showAccessibleRoutes.value = false
     showWelcomeScreen.value = true
 
     await nextTick()
@@ -562,11 +592,13 @@ function closeRouteStop() {
     <template v-else>
       <AppSidebar
         :user-profile="userProfile"
-        @home="sidebarHome"
-        @routes="sidebarRoutes"
-        @map="sidebarMap"
-        @create-route="sidebarCreateRoute"
-        @art="sidebarArt"
+        :accessible-active="showAccessibleRoutes"
+        @home="handleSidebarNavigation('home')"
+        @routes="handleSidebarNavigation('routes')"
+        @accessible="openAccessibleRoutes"
+        @map="handleSidebarNavigation('map')"
+        @create-route="handleSidebarNavigation('create-route')"
+        @art="handleSidebarNavigation('art')"
         @profile="handleSidebarProfile"
       />
 
@@ -580,7 +612,9 @@ function closeRouteStop() {
       />
 
       <main class="new-home">
+        <AccessibleRoutes v-if="showAccessibleRoutes" @back="handleSidebarNavigation('routes')" />
         <HomeOverview
+          v-else
           :route-mode="routeMode"
           :show-planner="showPlanner"
           :ready-routes="readyMoscowRoutes"
@@ -591,7 +625,7 @@ function closeRouteStop() {
         />
 
         <RoutePlanner
-          v-if="showPlanner"
+          v-if="showPlanner && !showAccessibleRoutes"
           :route-mode="routeMode"
           :route-title="routeTitle"
           :place="place"
@@ -610,7 +644,7 @@ function closeRouteStop() {
       </main>
 
       <RouteResult
-        v-if="result"
+        v-if="result && !showAccessibleRoutes"
         :route-mode="routeMode"
         :route-title="routeTitle"
         :route-about="routeAbout"
@@ -633,7 +667,7 @@ function closeRouteStop() {
       />
 
       <YandexMap
-        v-if="result && mapPoints.length"
+        v-if="result && mapPoints.length && !showAccessibleRoutes"
         :key="routeTitle + '-' + mapPoints.length"
         :place="place"
         :points="mapPoints"
@@ -642,7 +676,7 @@ function closeRouteStop() {
       />
 
       <RouteStops
-        v-if="routeStops.length"
+        v-if="routeStops.length && !showAccessibleRoutes"
         :route-stops="routeStops"
         :visited-stop-ids="visitedStopIds"
         :route-progress-percent="routeProgressPercent"
@@ -652,14 +686,14 @@ function closeRouteStop() {
       />
 
       <SavedRoutes
-        v-if="savedRoutes.length"
+        v-if="savedRoutes.length && !showAccessibleRoutes"
         :routes="savedRoutes"
         @open-route="openSavedRoute"
         @delete-route="deleteSavedRoute"
       />
 
       <RouteStopModal
-        v-if="activeStop"
+        v-if="activeStop && !showAccessibleRoutes"
         :stop="activeStop"
         :visited="isStopVisited(activeStop.id)"
         :user="user"

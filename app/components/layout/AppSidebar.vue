@@ -2,6 +2,7 @@
 import AppIcon from '../ui/AppIcon.vue'
 
 defineProps({
+  accessibleActive: { type: Boolean, default: false },
   userProfile: {
     type: Object,
     required: true
@@ -11,6 +12,7 @@ defineProps({
 defineEmits([
   'home',
   'routes',
+  'accessible',
   'map',
   'create-route',
   'art',
@@ -39,7 +41,8 @@ defineEmits([
     <nav class="side-nav">
       <button
         type="button"
-        class="side-nav-btn active"
+        class="side-nav-btn"
+        :class="{ active: !accessibleActive }"
         @click="$emit('home')"
       >
         <AppIcon name="house" />
@@ -53,6 +56,22 @@ defineEmits([
       >
         <AppIcon name="compass" />
         Маршруты
+      </button>
+
+      <button
+        type="button"
+        class="side-nav-btn"
+        :class="{ active: accessibleActive }"
+        :aria-current="accessibleActive ? 'page' : undefined"
+        @click="$emit('accessible')"
+      >
+        <svg class="rp-side-access-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11.5" cy="4.5" r="1.8" />
+          <path d="M11.5 7v6h5l2.6 4.5" />
+          <path d="M11.5 10H8.4" />
+          <path d="M7.2 12.5a6.6 6.6 0 1 0 9.8 7.2" />
+        </svg>
+        Без барьеров
       </button>
 
       <button
@@ -132,3 +151,7 @@ defineEmits([
     </button>
   </aside>
 </template>
+
+<style scoped>
+.rp-side-access-icon { display: block; flex: 0 0 20px; width: 20px !important; height: 20px !important; }
+</style>

@@ -513,6 +513,15 @@ watch(
         }
       }
 
+      // Если OAuth вернул пользователя с действующей сессией, но
+      // маркер входа не сохранился, всё равно открываем платформу.
+      // Это также позволяет не показывать экран входа при повторном визите.
+      if (intent !== 'enter' && showWelcomeScreen.value) {
+        showAuthModal.value = false
+        authLoading.value = false
+        await enterPlatform()
+      }
+
       return
     }
 

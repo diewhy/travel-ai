@@ -1,6 +1,7 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, nextTick, onBeforeUnmount, watch } from 'vue'
 import AccessibilityPassport from './AccessibilityPassport.vue'
+import AccessibilityAuditWorkspace from './AccessibilityAuditWorkspace.vue'
 
 defineEmits(['back'])
 
@@ -19,6 +20,8 @@ const accessOptions = [
 const selectedNeeds = ref([])
 const selectedTheme = ref('all')
 const expandedPassportId = ref(null)
+const expandedAuditId = ref(null)
+const isDevelopment = import.meta.dev
 const themes = [
   { id: 'all', label: 'Все направления' },
   { id: 'history', label: 'История и память' },
@@ -33,7 +36,11 @@ const pilotCandidates = [
     id: 'vdnh',
     number: '01',
     title: 'ВДНХ: прогулка по центральной территории',
-    description: 'Первый пилот для оценки покрытия дорожек, мест отдыха, входов и санитарной инфраструктуры.',
+    description: 'Первые точки официального маршрута «Центральный». Условия этого короткого участка ещё не проверены Russplore.',
+    // Четыре ориентира из официального маршрута ВДНХ, а не подтверждение их доступности Russplore.
+    stops: ['Арка Главного входа', 'Музей ВДНХ', 'Инклюзивная детская площадка', 'Северный розарий'],
+    sourceUrl: 'https://vdnh.ru/routes/9/',
+    sourceLabel: 'Маршрут на сайте ВДНХ',
     tags: ['family', 'culture'],
     label: 'Городская прогулка',
     check: ['Покрытие и уклоны', 'Входы и переходы', 'Места отдыха и туалеты'],
@@ -44,7 +51,17 @@ const pilotCandidates = [
     id: 'victory-park',
     number: '02',
     title: 'Парк Победы: история и память',
-    description: 'Кандидат на исторический маршрут с подробной проверкой пешеходных участков и доступности объектов.',
+    description: 'Пять памятных мест на Поклонной горе. Условия доступности всего пути предстоит проверить.',
+    // Порядок посещения — пилотный план Russplore; не подтверждённый безбарьерный путь.
+    stops: [
+      'Главная аллея Парка Победы',
+      'Фонтанный комплекс «Годы войны»',
+      'Монумент Победы',
+      'Вечный огонь',
+      'Музей Победы'
+    ],
+    sourceUrl: 'https://victorymuseum.ru/for-visitors/map/',
+    sourceLabel: 'Схема проезда Музея Победы',
     tags: ['history', 'family'],
     label: 'История и память',
     check: ['Непрерывность пути', 'Переходы и уклоны', 'Доступность входов'],
@@ -54,13 +71,109 @@ const pilotCandidates = [
     id: 'moscow-center',
     number: '03',
     title: 'Исторический центр Москвы',
-    description: 'Будущий маршрут по знаковым городским местам. Точки, длина и условия прохождения определятся после обследования.',
+    description: 'Пять исторических ориентиров в центре города. Проходимость переходов и доступность пути ещё предстоит проверить.',
+    // Порядок остановок — предварительный план прогулки Russplore, не проверенный безбарьерный маршрут.
+    stops: [
+      'Манежная площадь',
+      'Александровский сад',
+      'Могила Неизвестного Солдата',
+      'Красная площадь',
+      'Покровский собор (храм Василия Блаженного)'
+    ],
     tags: ['history', 'culture'],
     label: 'История города',
     check: ['Бордюры и переходы', 'Покрытие улиц', 'Доступные точки отдыха'],
     auditFocus: ['stepFree', 'rest', 'toilet', 'quiet', 'companion']
   }
 ]
+
+// Справочные сведения из официальных источников; не заменяют обследование пути.
+const officialNotes = {
+  "vdnh": {
+    "heading": "Сведения ВДНХ и АТОР",
+    "facts": [
+      {
+        "title": "Путь.",
+        "text": "АТОР описывает полный маршрут «Центральный» (около 5 км, 11 точек): ровное асфальтовое покрытие, отсутствие лестниц и места отдыха. Наш короткий участок отдельно не обследован."
+      },
+      {
+        "title": "Помощь.",
+        "text": "ВДНХ сообщает о бесплатном транспорте для маломобильных посетителей по предварительному запросу и прокате кресел-колясок; инфослужба: +7 (495) 544-34-00."
+      },
+      {
+        "title": "Инфраструктура.",
+        "text": "На территории есть адаптированные объекты и инклюзивная площадка. Расположение ближайшего доступного туалета и его фактическую работу на нашем участке необходимо уточнить."
+      }
+    ],
+    "sources": [
+      {
+        "title": "Доступная среда ВДНХ",
+        "url": "https://vdnh.ru/dostupnaya-sreda/"
+      },
+      {
+        "title": "Маршруты ВДНХ (АТОР)",
+        "url": "https://accessible.atorus.ru/moskva/VDNH"
+      }
+    ],
+    "check": "Проверить непрерывность прохода между четырьмя остановками, уклоны, бордюры, покрытие, отдых и ближайший доступный туалет."
+  },
+  "victory-park": {
+    "heading": "Сведения Музея Победы",
+    "facts": [
+      {
+        "title": "Вход.",
+        "text": "Для посетителей на креслах-колясках музей указывает центральный вход с подъездом слева от колоннады; также возможен вход через кинотеатр «Поклонка» с тыльной стороны."
+      },
+      {
+        "title": "Внутри.",
+        "text": "По сведениям музея есть лифт к основным экспозициям, широкие проходы, пандусы и помощь сотрудников."
+      },
+      {
+        "title": "Сопровождение.",
+        "text": "Музей просит по возможности предупредить о визите: +7 (499) 449-81-81, buro@victorymuseum.ru."
+      }
+    ],
+    "sources": [
+      {
+        "title": "Доступная среда Музея Победы",
+        "url": "https://victorymuseum.ru/about/available-environment/"
+      },
+      {
+        "title": "Правила посещения",
+        "url": "https://victorymuseum.ru/for-visitors/rules/"
+      }
+    ],
+    "check": "Проверить наружный путь между всеми пятью точками: уклоны, переходы, покрытие, доступный туалет, отдых и условия подхода к музею."
+  },
+  "moscow-center": {
+    "heading": "Сведения Исторического музея",
+    "facts": [
+      {
+        "title": "Музей.",
+        "text": "ГИМ сообщает, что Исторический музей и Музей Отечественной войны 1812 года оснащены лифтами и доступны для посетителей на креслах-колясках."
+      },
+      {
+        "title": "Покровский собор.",
+        "text": "Для уточнения условий посещения необходимо заранее связаться с музеем по адресу access@shm.ru. Доступность всех помещений не подтверждается этим сообщением."
+      },
+      {
+        "title": "Помощь.",
+        "text": "Для посещения Исторического музея можно заранее запросить сопровождение от метро; на сайте ГИМ указана подача заявки за три дня."
+      }
+    ],
+    "sources": [
+      {
+        "title": "ГИМ. Доступно",
+        "url": "https://shm.ru/dostupnyy-muzey/"
+      },
+      {
+        "title": "Контакты и правила посещения",
+        "url": "https://shm.ru/visit/services/gim/"
+      }
+    ],
+    "check": "Проверить пешеходные переходы, бордюры, участки брусчатки, входы, альтернативные обходы, отдых и туалеты на всём участке."
+  }
+}
 
 // Фильтруем ПРОГРАММУ ОБСЛЕДОВАНИЯ, а не доступность маршрута.
 // Для реального подбора путешествий понадобятся подтверждённые полевые данные.
@@ -74,19 +187,243 @@ const visibleCandidates = computed(() =>
     selectedNeeds.value.every((need) => candidate.auditFocus.includes(need))
   )
 )
+
+// Географические ориентиры, а не проложенные или обследованные безбарьерные пути.
+// Для ВДНХ сохраняем уже работающие предварительные координаты v14.
+// Для Парка Победы и центра Москвы используем предварительные координаты ориентиров:
+// так карта не зависит от нестабильного геокодирования названий.
+// Координаты не обозначают доступный вход или подтверждённую проходимость.
+const mapRuntimeConfig = useRuntimeConfig()
+const candidateMapStops = {
+  vdnh: [
+    // Рабочие предварительные координаты ВДНХ из v14 — оставлены без изменений.
+    { title: 'Арка Главного входа', coords: [55.826315, 37.637541] },
+    { title: 'Музей ВДНХ', coords: [55.826611, 37.638105] },
+    { title: 'Инклюзивная детская площадка', coords: [55.828480, 37.637165] },
+    { title: 'Северный розарий', coords: [55.828958, 37.635300] }
+  ],
+  'victory-park': [
+    // Предварительные ориентиры (НЕ координаты подтверждённого безбарьерного пути).
+    // Аллея — протяжённый объект; метка стоит на выбранном участке.
+    { title: 'Главная аллея Парка Победы', coords: [55.73360, 37.51510] },
+    // Фонтаны — протяжённый комплекс; метка стоит примерно в его средней части.
+    { title: 'Фонтанный комплекс «Годы войны»', coords: [55.73285, 37.51100] },
+    // Монумент Победы: Площадь Победы, 3, стр. 2; около 55.73174, 37.50708.
+    { title: 'Монумент Победы', coords: [55.731740, 37.507076] },
+    // Вечный огонь расположен у монумента; точную позицию следует уточнить на месте.
+    { title: 'Вечный огонь', coords: [55.731570, 37.506930] },
+    // Музей Победы: площадь Победы, 3; координаты здания.
+    { title: 'Музей Победы', coords: [55.730979, 37.504833] }
+  ],
+  'moscow-center': [
+    // Предварительные ориентиры. Площади и сад — территории, метки означают примерные центры.
+    { title: 'Манежная площадь', coords: [55.755830, 37.614720] },
+    { title: 'Александровский сад', coords: [55.753987, 37.614012] },
+    { title: 'Могила Неизвестного Солдата', coords: [55.754784, 37.616150] },
+    { title: 'Красная площадь', coords: [55.753544, 37.621202] },
+    { title: 'Покровский собор', coords: [55.752490, 37.623205] }
+  ]
+}
+
+// Эти координаты — центры поиска и отображения районов, не геометки маршрута.
+const candidateMapCenters = {
+  vdnh: [55.8277, 37.6370],
+  'victory-park': [55.731, 37.509],
+  'moscow-center': [55.752, 37.617]
+}
+
+const openMapId = ref(null)
+const mapState = ref('idle')
+const mapMessage = ref('')
+let mapInstance = null
+let mapGeneration = 0
+let yandexApiPromise = null
+
+function getYandexMapsApi() {
+  if (typeof window === 'undefined') return Promise.reject(new Error('Карта доступна в браузере.'))
+  if (window.ymaps) return Promise.resolve(window.ymaps)
+  if (yandexApiPromise) return yandexApiPromise
+
+  const key = mapRuntimeConfig.public.yandexMapsKey
+  if (!key) return Promise.reject(new Error('Не настроен публичный ключ Яндекс Карт.'))
+
+  yandexApiPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[src*="api-maps.yandex.ru/2.1/"]')
+    const script = existing || document.createElement('script')
+    let finished = false
+
+    const finish = (error) => {
+      if (finished) return
+      finished = true
+      clearTimeout(timeoutId)
+      script.removeEventListener('load', onLoad)
+      script.removeEventListener('error', onError)
+      if (error) reject(error)
+      else resolve(window.ymaps)
+    }
+    const onLoad = () => window.ymaps
+      ? finish(null)
+      : finish(new Error('API Яндекс Карт не инициализировался.'))
+    const onError = () => finish(new Error('Не удалось загрузить Яндекс Карты.'))
+    const timeoutId = setTimeout(() => {
+      if (window.ymaps) finish(null)
+      else finish(new Error('Время ожидания Яндекс Карт истекло.'))
+    }, 15000)
+
+    script.addEventListener('load', onLoad, { once: true })
+    script.addEventListener('error', onError, { once: true })
+    if (!existing) {
+      script.src = `https://api-maps.yandex.ru/2.1/?apikey=${encodeURIComponent(key)}&lang=ru_RU`
+      script.async = true
+      document.head.appendChild(script)
+    }
+  }).catch((error) => {
+    yandexApiPromise = null
+    throw error
+  })
+  return yandexApiPromise
+}
+
+function destroyCandidateMap() {
+  if (mapInstance) {
+    mapInstance.destroy()
+    mapInstance = null
+  }
+}
+
+function closeCandidateMap() {
+  ++mapGeneration
+  destroyCandidateMap()
+  openMapId.value = null
+  mapState.value = 'idle'
+  mapMessage.value = ''
+}
+
+// Отклоняем результаты геокодирования в другом районе Москвы.
+// Проверка приблизительна и не подтверждает точность найденного входа.
+function nearCandidateArea(coords, id) {
+  const center = candidateMapCenters[id]
+  if (!center || !Array.isArray(coords) || coords.length !== 2) return false
+  const [lat, lon] = coords.map(Number)
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return false
+  const deltaLatMeters = (lat - center[0]) * 111_000
+  const deltaLonMeters = (lon - center[1]) * 111_000 * Math.cos(center[0] * Math.PI / 180)
+  return Math.hypot(deltaLatMeters, deltaLonMeters) < 2400
+}
+
+async function getCandidateMarkers(ymaps, id) {
+  const stops = candidateMapStops[id] || []
+  return (await Promise.all(stops.map(async (stop, index) => {
+    if (stop.coords) return { ...stop, order: index + 1 }
+    if (!stop.query) return null
+    try {
+      const result = await ymaps.geocode(stop.query, { results: 1 })
+      const obj = result?.geoObjects?.get(0)
+      if (!obj) return null
+      const coords = obj.geometry?.getCoordinates()
+      if (!nearCandidateArea(coords, id)) return null
+      return { title: stop.title, coords, order: index + 1 }
+    } catch (error) {
+      console.warn('[Russplore] Не удалось определить ориентир на карте:', stop.title, error)
+      return null
+    }
+  }))).filter(Boolean)
+}
+
+async function toggleCandidateMap(id) {
+  if (openMapId.value === id) {
+    closeCandidateMap()
+    return
+  }
+  closeCandidateMap() // За один раз открыта только одна карта.
+  if (!candidateMapStops[id]) return
+
+  openMapId.value = id
+  mapState.value = 'loading'
+  mapMessage.value = ''
+  const generation = ++mapGeneration
+  await nextTick()
+
+  try {
+    const ymaps = await getYandexMapsApi()
+    await new Promise((resolve, reject) => {
+      try { ymaps.ready(resolve, reject) }
+      catch (error) { reject(error) }
+    })
+    if (generation !== mapGeneration) return
+
+    const markers = await getCandidateMarkers(ymaps, id)
+    if (generation !== mapGeneration) return
+    if (!markers.length) {
+      throw new Error('Не удалось найти ориентиры этого района. Попробуйте открыть карту позднее.')
+    }
+
+    // Внутри v-for Vue возвращает массив template-ref. ID гарантирует DOM-элемент.
+    const container = document.getElementById(`rp-access-map-canvas-${id}`)
+    if (!(container instanceof HTMLElement)) throw new Error('Контейнер карты не найден.')
+
+    const map = new ymaps.Map(container, {
+      center: candidateMapCenters[id],
+      zoom: 15,
+      controls: ['zoomControl', 'fullscreenControl']
+    }, { suppressMapOpenBlock: true })
+    mapInstance = map
+
+    markers.forEach((point) => {
+      const placemark = new ymaps.Placemark(point.coords, {
+        iconContent: String(point.order),
+        hintContent: `${point.order}. ${point.title}`,
+        balloonContentHeader: `${point.order}. ${point.title}`,
+        balloonContentBody: 'Предварительное расположение ориентира. Доступность пути и точность входа не подтверждены Russplore.'
+      }, { preset: 'islands#greenIcon' })
+      map.geoObjects.add(placemark)
+    })
+
+    map.container.fitToViewport()
+    if (markers.length > 1) {
+      const bounds = map.geoObjects.getBounds()
+      if (bounds) {
+        await map.setBounds(bounds, { zoomMargin: 45, checkZoomRange: true })
+        if (generation !== mapGeneration) return
+        if (map.getZoom() > 17) map.setZoom(17)
+      }
+    } else {
+      map.setCenter(markers[0].coords, 16)
+    }
+
+    if (markers.length < candidateMapStops[id].length) {
+      mapMessage.value = `Найдено ${markers.length} из ${candidateMapStops[id].length} ориентиров. Остальные точки требуют уточнения.`
+    }
+    mapState.value = 'ready'
+  } catch (error) {
+    if (generation !== mapGeneration) return
+    destroyCandidateMap()
+    mapMessage.value = error?.message || 'Карта временно недоступна.'
+    mapState.value = 'error'
+  }
+}
+
+// Если фильтр убрал открытую карточку — освобождаем карту.
+watch(visibleCandidates, (list) => {
+  if (openMapId.value && !list.some((candidate) => candidate.id === openMapId.value)) {
+    closeCandidateMap()
+  }
+})
+
+onBeforeUnmount(closeCandidateMap)
+
 const chosenOptions = computed(() =>
   accessOptions.filter((option) => selectedNeeds.value.includes(option.id))
 )
 const chosenLabels = computed(() => chosenOptions.value.map((option) => option.label))
 const hasFilters = computed(() => selectedNeeds.value.length > 0 || selectedTheme.value !== 'all')
 const totalFilteredOut = computed(() => themeCandidates.value.length - visibleCandidates.value.length)
-const auditLabelById = Object.fromEntries(accessOptions.map((option) => [option.id, option.label]))
-function auditLabelsFor(candidate) {
-  return candidate.auditFocus.map((id) => auditLabelById[id]).filter(Boolean)
-}
-
 function togglePassport(id) {
   expandedPassportId.value = expandedPassportId.value === id ? null : id
+}
+
+function toggleAudit(id) {
+  expandedAuditId.value = expandedAuditId.value === id ? null : id
 }
 
 function toggleNeed(id) {
@@ -97,6 +434,16 @@ function toggleNeed(id) {
 function resetFilters() {
   selectedNeeds.value = []
   selectedTheme.value = 'all'
+}
+
+function stopCountLabel(count) {
+  const n = Number(count) || 0
+  const tens = n % 100
+  const units = n % 10
+  if (tens >= 11 && tens <= 14) return `${n} точек`
+  if (units === 1) return `${n} точка`
+  if (units >= 2 && units <= 4) return `${n} точки`
+  return `${n} точек`
 }
 </script>
 
@@ -174,12 +521,49 @@ function resetFilters() {
             <span class="rp-access-card-type">{{ candidate.label }}</span>
             <h3>{{ candidate.title }}</h3>
             <p>{{ candidate.description }}</p>
-            <div class="rp-access-checklist">
-              <strong>{{ chosenOptions.length ? 'Ваши условия — в плане обследования:' : 'В плане обследования:' }}</strong>
-              <div class="rp-access-audit-tags">
-                <span v-for="label in (chosenOptions.length ? chosenOptions.map((option) => option.label) : auditLabelsFor(candidate))" :key="label">{{ label }} <small>· не проверено</small></span>
+            <!-- Маршрут компактно раскрывается по запросу. Проверки — только в паспорте и акте. -->
+            <details v-if="candidate.stops?.length" class="rp-access-stops">
+              <summary>
+                <span>План прогулки</span>
+                <span class="rp-access-stops-count">{{ stopCountLabel(candidate.stops.length) }}</span>
+                <span class="rp-access-stops-chevron" aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;flex:0 0 16px;font-size:14px;line-height:1;">▾</span>
+              </summary>
+              <ol>
+                <li v-for="stop in candidate.stops" :key="stop">{{ stop }}</li>
+              </ol>
+              <a v-if="candidate.sourceUrl" :href="candidate.sourceUrl" target="_blank" rel="noopener noreferrer">{{ candidate.sourceLabel || 'Источник маршрута' }} ↗</a>
+            </details>
+            <!-- Показываем ориентиры на карте, но НЕ строим неподтверждённый безбарьерный путь. -->
+            <div v-if="candidateMapStops[candidate.id]" class="rp-access-map-section" style="margin:0 0 13px;min-width:0;">
+              <button
+                type="button"
+                class="rp-access-map-button"
+                style="display:inline-flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px;width:auto;max-width:100%;min-height:40px;margin:0;padding:9px 13px;border:1px solid #bdded4;border-radius:10px;background:#eff9f5;color:#087b6e;font-family:inherit;font-size:12px;font-weight:800;line-height:1.35;cursor:pointer;text-align:center;"
+                :aria-expanded="openMapId === candidate.id"
+                :aria-controls="`rp-access-map-${candidate.id}`"
+                @click="toggleCandidateMap(candidate.id)"
+              >
+                <svg aria-hidden="true" width="16" height="16" style="display:block;width:16px;height:16px;flex:0 0 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6.5 9 3l6 3.5L21 3v14.5L15 21l-6-3.5L3 21z"/>
+                  <path d="M9 3v14.5M15 6.5V21"/>
+                </svg>
+                <span>{{ openMapId === candidate.id ? 'Скрыть карту' : 'Показать на карте' }}</span>
+                <span class="rp-access-map-count" style="display:inline-flex;align-items:center;margin-left:2px;padding:4px 7px;border-radius:999px;background:#dbf0e8;color:#087b6e;font-size:10px;font-weight:700;white-space:nowrap;">{{ stopCountLabel(candidate.stops.length) }}</span>
+              </button>
+              <div v-if="openMapId === candidate.id" :id="`rp-access-map-${candidate.id}`" class="rp-access-map-panel" style="margin-top:11px;padding:12px;border:1px solid #dcebe6;border-radius:12px;background:#f8fcfa;min-width:0;overflow:hidden;">
+                <p class="rp-access-map-notice" style="margin:0 0 10px;color:#4d6974;font-size:11px;line-height:1.55;">Только расположение ориентиров. Безбарьерный путь между ними пока не проверен.</p>
+                <p v-if="mapState === 'loading'" class="rp-access-map-status" role="status">Загружаем карту и уточняем точки…</p>
+                <p v-if="mapState === 'error'" class="rp-access-map-error" role="alert">{{ mapMessage }}</p>
+                <div
+                  v-if="mapState !== 'error'"
+                  :id="`rp-access-map-canvas-${candidate.id}`"
+                  class="rp-access-map-canvas"
+                  style="display:block;width:100%;height:310px;min-height:310px;border:1px solid #dde8e7;border-radius:10px;overflow:hidden;background:#eaf1ef;"
+                  :aria-label="`Яндекс Карта: ${candidate.title}, ${stopCountLabel(candidate.stops.length)}`"
+                ></div>
+                <p v-if="mapState === 'ready' && mapMessage" class="rp-access-map-status" role="status">{{ mapMessage }}</p>
+                <p class="rp-access-map-caption" style="margin:9px 0 0;color:#738992;font-size:10px;line-height:1.55;">Метки предварительные. Уточняйте расположение точек и условия прохода перед поездкой.</p>
               </div>
-              <details class="rp-access-audit-details"><summary>Что ещё предстоит изучить</summary><ul><li v-for="item in candidate.check" :key="item">{{ item }}</li></ul></details>
             </div>
             <div class="rp-access-card-foot">
               <span>Москва · данные ожидают проверки</span>
@@ -199,6 +583,59 @@ function resetFilters() {
               :id="`rp-passport-${candidate.id}`"
               :candidate="candidate"
             />
+            <!-- Один компактный блок справочной информации под паспортом для всех трёх маршрутов. -->
+            <details
+              v-if="expandedPassportId === candidate.id && officialNotes[candidate.id]"
+              class="rp-access-evidence"
+              style="margin-top:12px;border:1px solid #dcebe5;border-radius:12px;background:#f8fcfa;overflow:hidden;"
+            >
+              <summary style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;padding:11px 13px;list-style:none;cursor:pointer;color:#08796f;font-size:12px;font-weight:750;line-height:1.4;">
+                <span style="display:block;flex:1 1 auto;min-width:0;overflow-wrap:break-word;">{{ officialNotes[candidate.id].heading }}</span>
+                <span class="rp-access-evidence-chevron" aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;flex:0 0 16px;width:16px;height:16px;font-size:14px;line-height:1;">▾</span>
+              </summary>
+              <div class="rp-access-evidence-body" style="padding:11px 13px 13px;border-top:1px solid #e4eeea;">
+                <p class="rp-access-evidence-note">Опубликованные сведения об объектах, не результат обследования Russplore.</p>
+                <ul>
+                  <li v-for="(fact, index) in officialNotes[candidate.id].facts" :key="index">
+                    <strong>{{ fact.title }}</strong> {{ fact.text }}
+                  </li>
+                </ul>
+                <div class="rp-access-evidence-links">
+                  <a
+                    v-for="source in officialNotes[candidate.id].sources"
+                    :key="source.url"
+                    :href="source.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >{{ source.title }}</a>
+                </div>
+                <p class="rp-access-evidence-check"><strong>Проверить на месте:</strong> {{ officialNotes[candidate.id].check }}</p>
+                <p class="rp-access-evidence-note">Источники изучены 05.11.2026. Доступность всего маршрута не подтверждена.</p>
+              </div>
+            </details>
+            <div v-if="isDevelopment" class="rp-access-audit-dev">
+              <button
+                type="button"
+                class="rp-access-audit-trigger"
+                style="display:inline-flex;align-items:center;justify-content:center;gap:9px;width:auto;max-width:100%;min-height:42px;margin:0;padding:10px 14px;border:1px solid #b9dfd3;border-radius:11px;background:#f1faf6;color:#087b6e;font-family:inherit;font-size:12px;font-weight:800;line-height:1.4;cursor:pointer;text-align:center;"
+                :aria-expanded="expandedAuditId === candidate.id"
+                :aria-controls="`rp-audit-${candidate.id}`"
+                @click="toggleAudit(candidate.id)"
+              >
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="display:block;width:16px;height:16px;flex:0 0 16px;">
+                  <rect x="5" y="4" width="14" height="17" rx="2" />
+                  <path d="M9 4.5V3.5h6v1M9 10h6M9 14h6M9 18h4" />
+                </svg>
+                <span>{{ expandedAuditId === candidate.id ? 'Закрыть акт обследования' : 'Заполнить акт обследования' }}</span>
+                <span class="rp-access-audit-badge" style="display:inline-flex;align-items:center;padding:4px 7px;border-radius:999px;background:#dff2e9;color:#087b6e;font-size:10px;font-weight:800;line-height:1.1;white-space:nowrap;">Локально</span>
+              </button>
+              <AccessibilityAuditWorkspace
+                v-if="expandedAuditId === candidate.id"
+                :id="`rp-audit-${candidate.id}`"
+                :key="candidate.id"
+                :candidate="candidate"
+              />
+            </div>
           </article>
         </div>
         <div v-else class="rp-access-empty">
@@ -303,4 +740,78 @@ function resetFilters() {
 .rp-access-card-foot span:last-child{font-size:10px;color:#7e929d;}
 @media(max-width:520px){.rp-access-passport-btn{width:100%!important;}.rp-access-card-foot{align-items:stretch;flex-direction:column;}}
 
+/* Локальный акт обследования: компактная кнопка в стиле Russplore. */
+.rp-access-audit-dev{margin-top:12px}
+.rp-access-audit-trigger{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  gap:9px!important;width:auto!important;max-width:100%;min-height:42px!important;
+  margin:0!important;padding:10px 14px!important;
+  border:1px solid #b9dfd3!important;border-radius:11px!important;
+  background:#f1faf6!important;color:#087b6e!important;
+  font-family:inherit!important;font-size:12px!important;font-weight:800!important;
+  line-height:1.4!important;text-align:center;cursor:pointer;
+  transition:background .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.rp-access-audit-trigger svg{display:block!important;width:16px!important;height:16px!important;flex:0 0 16px!important}
+.rp-access-audit-trigger:hover{background:#e2f4ed!important;border-color:#88c8b5!important;box-shadow:0 3px 12px rgba(8,123,110,.08)}
+.rp-access-audit-trigger:focus-visible{outline:3px solid #79d2c2!important;outline-offset:2px}
+.rp-access-audit-trigger[aria-expanded="true"]{background:#e2f4ed!important;border-color:#88c8b5!important}
+.rp-access-audit-badge{
+  display:inline-flex;align-items:center;padding:4px 7px;border-radius:999px;
+  background:#dff2e9;color:#087b6e;font-size:10px;font-weight:800;line-height:1.1;white-space:nowrap;
+}
+@media(max-width:480px){.rp-access-audit-trigger{width:100%!important;flex-wrap:wrap}}
+
+/* Пилотный маршрут ВДНХ: раскрываемый короткий план, без повторных критериев. */
+.rp-access-stops{margin:0 0 15px;padding:0;border:1px solid #dcebe6;border-radius:11px;background:#f7fbf9;overflow:hidden}
+.rp-access-stops summary{display:flex;align-items:center;gap:9px;min-height:43px;padding:10px 12px;list-style:none;cursor:pointer;color:#087b6e;font-size:12px;font-weight:800}
+.rp-access-stops summary::-webkit-details-marker{display:none}
+.rp-access-stops summary:focus-visible{outline:3px solid #79d2c2;outline-offset:-3px}
+.rp-access-stops-count{margin-left:auto;color:#6a8790;font-weight:600;font-size:11px;white-space:nowrap}
+.rp-access-stops-chevron{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:16px!important;height:16px!important;flex:0 0 16px!important;font-size:14px!important;line-height:1!important;transition:transform .18s ease}
+.rp-access-stops[open] .rp-access-stops-chevron{transform:rotate(180deg)}
+.rp-access-stops ol{margin:0 14px 11px 31px;padding:0;color:#465e6b;font-size:11px;line-height:1.85}
+.rp-access-stops li{padding-left:3px}
+.rp-access-stops>a{display:inline-block;margin:0 14px 14px;font-size:11px;font-weight:700;color:#078b7c;text-decoration:underline;text-underline-offset:3px}
+.rp-access-card-foot{margin-top:auto}
+
+/* Источники и короткий план выездной проверки — один раскрываемый блок. */
+.rp-access-evidence{margin-top:9px;border:1px solid #dbeae5;border-radius:11px;background:#fff;color:#193347;overflow:hidden}
+.rp-access-evidence summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 13px;min-height:42px;list-style:none;cursor:pointer;font-size:11px;font-weight:800;color:#08796f}
+.rp-access-evidence summary::-webkit-details-marker{display:none}
+.rp-access-evidence summary:focus-visible{outline:3px solid #79d2c2;outline-offset:-3px}
+.rp-access-evidence-chevron{transition:transform .18s ease}.rp-access-evidence[open] .rp-access-evidence-chevron{transform:rotate(180deg)}
+.rp-access-evidence-body{padding:11px 13px 13px;border-top:1px solid #edf3f0}
+.rp-access-evidence-note{margin:0 0 9px;font-size:10px;line-height:1.6;color:#748692}
+.rp-access-evidence-note:last-child{margin:9px 0 0}
+.rp-access-evidence ul{margin:8px 0 12px;padding-left:18px;color:#4d6774;font-size:11px;line-height:1.65}
+.rp-access-evidence li+li{margin-top:6px}
+.rp-access-evidence li strong,.rp-access-evidence-check strong{color:#244c58}
+.rp-access-evidence-links{display:flex;gap:6px 12px;flex-wrap:wrap;margin-bottom:12px}
+.rp-access-evidence-links a{font-size:10px;font-weight:700;color:#08796f;text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere}
+.rp-access-evidence-check{margin:0;padding:10px 11px;border-radius:8px;background:#f2f8f5;color:#526f78;font-size:10px;line-height:1.6}
+@media(max-width:520px){.rp-access-evidence summary{gap:8px!important}}
+
+
+/* Компактные карты трёх пилотов (не подтверждённые безбарьерные пути). */
+.rp-access-map-section{margin:0 0 13px;min-width:0}
+.rp-access-map-button{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  gap:9px!important;width:auto!important;max-width:100%;min-height:40px!important;
+  margin:0!important;padding:9px 13px!important;border:1px solid #bdded4!important;
+  border-radius:10px!important;background:#eff9f5!important;color:#087b6e!important;
+  font-size:12px!important;font-weight:800!important;line-height:1.35!important;
+  cursor:pointer;transition:background .18s ease,border-color .18s ease;
+}
+.rp-access-map-button:hover{background:#def2e9!important;border-color:#83c6b4!important}
+.rp-access-map-button:focus-visible{outline:3px solid #79d2c2!important;outline-offset:2px}
+.rp-access-map-button svg{display:block!important;width:16px!important;height:16px!important;max-width:16px!important;flex:0 0 16px!important}
+.rp-access-map-count{margin-left:2px;padding:4px 7px;border-radius:999px;background:#dbf0e8;color:#087b6e;font-size:10px;font-weight:700;white-space:nowrap}
+.rp-access-map-panel{margin-top:11px;padding:12px;border:1px solid #dcebe6;border-radius:12px;background:#f8fcfa;min-width:0;overflow:hidden}
+.rp-access-map-notice{margin:0 0 10px;font-size:11px;line-height:1.55;color:#4d6974}
+.rp-access-map-canvas{display:block!important;width:100%!important;height:310px!important;min-height:310px!important;border:1px solid #dde8e7;border-radius:10px;overflow:hidden;background:#eaf1ef}
+.rp-access-map-status,.rp-access-map-error{margin:0 0 10px;font-size:11px;line-height:1.5}
+.rp-access-map-status{color:#5b7380}.rp-access-map-error{color:#a13f41}
+.rp-access-map-caption{margin:9px 0 0!important;color:#738992!important;font-size:10px!important;line-height:1.55!important}
+@media(max-width:520px){.rp-access-map-button{width:100%!important}.rp-access-map-panel{padding:9px}.rp-access-map-canvas{height:285px!important;min-height:285px!important}}
 </style>

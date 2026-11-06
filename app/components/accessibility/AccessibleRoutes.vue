@@ -26,7 +26,8 @@ const themes = [
   { id: 'all', label: 'Все направления' },
   { id: 'history', label: 'История и память' },
   { id: 'family', label: 'Для всей семьи' },
-  { id: 'culture', label: 'Культура и город' }
+  { id: 'culture', label: 'Культура и город' },
+  { id: 'svo-family', label: 'СВО и семьи' }
 ]
 
 // Кандидаты, не опубликованные в качестве доступных маршрутов.
@@ -84,6 +85,45 @@ const pilotCandidates = [
     label: 'История города',
     check: ['Бордюры и переходы', 'Покрытие улиц', 'Доступные точки отдыха'],
     auditFocus: ['stepFree', 'rest', 'toilet', 'quiet', 'companion']
+  },
+  {
+    id: 'borodino-family',
+    audience: 'svo-family',
+    number: '04',
+    title: 'Память поколений: 1812 год',
+    description: 'Семейная историческая прогулка у музеев 1812 года. Переходы, входы и условия посещения ещё предстоит проверить.',
+    // Последовательность ориентиров предварительная, НЕ подтверждённый безбарьерный путь.
+    stops: [
+      'Триумфальная арка',
+      'Музей-панорама «Бородинская битва»',
+      'Памятник М. И. Кутузову',
+      'Музей «Кутузовская изба»'
+    ],
+    sourceUrl: 'https://www.1812panorama.ru/',
+    sourceLabel: 'Сайт музейного комплекса',
+    tags: ['history', 'family'],
+    label: 'Память поколений',
+    check: ['Подход к арке и безопасные переходы', 'Условия посещения музеев', 'Места отдыха'],
+    auditFocus: ['stepFree', 'wheelchair', 'rest', 'toilet', 'companion', 'family']
+  },
+  {
+    id: 'cosmos-family',
+    audience: 'svo-family',
+    number: '05',
+    title: 'Космос для всей семьи',
+    description: 'Короткая прогулка по Аллее космонавтов с посещением музея по желанию. Доступность пути ещё не обследована.',
+    // Включение музея в план НЕ означает подтверждения доступного входа или всего пути.
+    stops: [
+      'Памятник С. П. Королёву',
+      'Монумент «Покорителям космоса»',
+      'Музей космонавтики'
+    ],
+    sourceUrl: 'https://m.kosmo-museum.ru/',
+    sourceLabel: 'Сайт Музея космонавтики',
+    tags: ['family', 'culture'],
+    label: 'Для всей семьи',
+    check: ['Покрытие и переходы', 'Подход к музею и условия входа', 'Отдых и санитарная инфраструктура'],
+    auditFocus: ['stepFree', 'wheelchair', 'rest', 'toilet', 'quiet', 'family']
   }
 ]
 
@@ -172,6 +212,43 @@ const officialNotes = {
       }
     ],
     "check": "Проверить пешеходные переходы, бордюры, участки брусчатки, входы, альтернативные обходы, отдых и туалеты на всём участке."
+  },
+  'borodino-family': {
+    heading: 'Посещение музеев 1812 года',
+    facts: [
+      {
+        title: 'Вход и ограничения.',
+        text: 'Музей-панорама и «Кутузовская изба» частично приспособлены: есть пандусы и поручни. В панораме работают подъёмники, однако доступ в панорамный зал на кресле-коляске затруднён.'
+      },
+      {
+        title: 'Перед поездкой.',
+        text: 'Музей просит заранее сообщить о визите по телефону +7 (499) 148-19-27. В правилах посещения ветераны боевых действий указаны среди категорий, покупающих билет без очереди.'
+      }
+    ],
+    sources: [
+      { title: 'Музей без барьеров', url: 'https://www.1812panorama.ru/visitors/museum-without-barriers' },
+      { title: 'Правила посещения', url: 'https://www.1812panorama.ru/visitors/rules' }
+    ],
+    check: 'Безопасный подход к арке, переходы, входы в оба музея, фактическую работу подъёмников, санитарные комнаты и места отдыха.'
+  },
+  'cosmos-family': {
+    heading: 'Посещение Музея космонавтики',
+    facts: [
+      {
+        title: 'Условия музея.',
+        text: 'Музей сообщает о пандусах, лифтах и адаптации экспозиции для маломобильных посетителей. Сам путь по Аллее космонавтов Russplore ещё не обследовал.'
+      },
+      {
+        title: 'Участникам СВО.',
+        text: 'В опубликованном прейскуранте музея предусмотрен бесплатный билет для участников СВО при подтверждении права через Госуслуги. Условия для членов семьи уточняйте отдельно.'
+      }
+    ],
+    sources: [
+      { title: 'Планирование визита', url: 'https://kosmo-museum.ru/static_pages/splanirovat-vizit' },
+      { title: 'Стоимость и льготы', url: 'https://m.kosmo-museum.ru/static_pages/stoimost-biletov' },
+      { title: 'Вопросы о доступности', url: 'https://m.kosmo-museum.ru/questions_and_answers' }
+    ],
+    check: 'Покрытие и бордюры на Аллее космонавтов, фактический вход, туалет, места отдыха и условия сопровождения.'
   }
 }
 
@@ -179,7 +256,10 @@ const officialNotes = {
 // Для реального подбора путешествий понадобятся подтверждённые полевые данные.
 const themeCandidates = computed(() =>
   pilotCandidates.filter((candidate) =>
-    selectedTheme.value === 'all' || candidate.tags.includes(selectedTheme.value)
+    selectedTheme.value === 'all' ||
+    (selectedTheme.value === 'svo-family'
+      ? candidate.audience === 'svo-family'
+      : candidate.tags.includes(selectedTheme.value))
   )
 )
 const visibleCandidates = computed(() =>
@@ -215,6 +295,18 @@ const candidateMapStops = {
     // Музей Победы: площадь Победы, 3; координаты здания.
     { title: 'Музей Победы', coords: [55.730979, 37.504833] }
   ],
+  'borodino-family': [
+    // Предварительные координаты достопримечательностей, не проверенные доступные входы.
+    { title: 'Триумфальная арка', coords: [55.73682, 37.52003] },
+    { title: 'Музей-панорама «Бородинская битва»', coords: [55.738823, 37.523184] },
+    { title: 'Памятник М. И. Кутузову', coords: [55.738926, 37.523196] },
+    { title: 'Музей «Кутузовская изба»', coords: [55.73972, 37.52314] }
+  ],
+  'cosmos-family': [
+    { title: 'Памятник С. П. Королёву', coords: [55.821146, 37.638849] },
+    { title: 'Монумент «Покорителям космоса»', coords: [55.82278, 37.64000] },
+    { title: 'Музей космонавтики', coords: [55.822913, 37.639669] }
+  ],
   'moscow-center': [
     // Предварительные ориентиры. Площади и сад — территории, метки означают примерные центры.
     { title: 'Манежная площадь', coords: [55.755830, 37.614720] },
@@ -229,7 +321,9 @@ const candidateMapStops = {
 const candidateMapCenters = {
   vdnh: [55.8277, 37.6370],
   'victory-park': [55.731, 37.509],
-  'moscow-center': [55.752, 37.617]
+  'moscow-center': [55.752, 37.617],
+  'borodino-family': [55.7382, 37.5222],
+  'cosmos-family': [55.8220, 37.6398]
 }
 
 const openMapId = ref(null)
@@ -503,6 +597,19 @@ function stopCountLabel(count) {
 
       <div class="rp-access-catalog">
         <div class="rp-access-section-head"><div><span class="rp-access-eyebrow">ПЕРВЫЙ ЭТАП · МОСКВА</span><h2>Кандидаты на обследование</h2><p>Фильтр выбирает планы проверок, а не маршруты с доказанной доступностью.</p></div><span class="rp-access-count" aria-live="polite">{{ visibleCandidates.length }} из {{ pilotCandidates.length }}</span></div>
+        <!-- Тематическая подборка, не отдельная проверка статуса и не гарантия доступности. -->
+        <div class="rp-access-svo-strip" aria-label="Маршруты для участников и ветеранов СВО и их семей">
+          <div class="rp-access-svo-strip-copy">
+            <strong>Для участников и ветеранов СВО и их семей</strong>
+            <p>Совместные исторические и семейные прогулки. Условия доступности проверяются отдельно.</p>
+          </div>
+          <button
+            type="button"
+            class="rp-access-svo-strip-action"
+            :aria-pressed="selectedTheme === 'svo-family'"
+            @click="selectedTheme = 'svo-family'"
+          >Посмотреть подборку <span aria-hidden="true">→</span></button>
+        </div>
         <div class="rp-access-tabs" role="group" aria-label="Тематика маршрута">
           <button v-for="theme in themes" :key="theme.id" type="button" :class="{ 'is-active': selectedTheme === theme.id }" :aria-pressed="selectedTheme === theme.id" @click="selectedTheme = theme.id">{{ theme.label }}</button>
         </div>
@@ -519,6 +626,7 @@ function stopCountLabel(count) {
           <article v-for="candidate in visibleCandidates" :key="candidate.id" class="rp-access-card">
             <div class="rp-access-card-head"><span class="rp-access-card-number">{{ candidate.number }}</span><span class="rp-access-pending">Доступность не подтверждена</span></div>
             <span class="rp-access-card-type">{{ candidate.label }}</span>
+            <span v-if="candidate.audience === 'svo-family'" class="rp-access-svo-chip">Для участников СВО и их семей</span>
             <h3>{{ candidate.title }}</h3>
             <p>{{ candidate.description }}</p>
             <!-- Маршрут компактно раскрывается по запросу. Проверки — только в паспорте и акте. -->
@@ -610,7 +718,7 @@ function stopCountLabel(count) {
                   >{{ source.title }}</a>
                 </div>
                 <p class="rp-access-evidence-check"><strong>Проверить на месте:</strong> {{ officialNotes[candidate.id].check }}</p>
-                <p class="rp-access-evidence-note">Источники изучены 05.11.2026. Доступность всего маршрута не подтверждена.</p>
+                <p class="rp-access-evidence-note">Источники изучены 5–6 ноября 2026 года. Доступность всего маршрута не подтверждена.</p>
               </div>
             </details>
             <div v-if="isDevelopment" class="rp-access-audit-dev">
@@ -814,4 +922,34 @@ function stopCountLabel(count) {
 .rp-access-map-status{color:#5b7380}.rp-access-map-error{color:#a13f41}
 .rp-access-map-caption{margin:9px 0 0!important;color:#738992!important;font-size:10px!important;line-height:1.55!important}
 @media(max-width:520px){.rp-access-map-button{width:100%!important}.rp-access-map-panel{padding:9px}.rp-access-map-canvas{height:285px!important;min-height:285px!important}}
+
+/* Russplore v19 — отдельная, но компактная семейная подборка для участников и ветеранов СВО. */
+.rp-access-svo-strip{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  margin:18px 0 2px;padding:14px 16px;
+  border:1px solid #d3e6df;border-radius:12px;background:#f5faf8;
+}
+.rp-access-svo-strip-copy{min-width:0;flex:1 1 auto}
+.rp-access-svo-strip-copy strong{display:block;color:#193347;font-size:12px;line-height:1.45;font-weight:800}
+.rp-access-svo-strip-copy p{margin:4px 0 0;color:#647d88;font-size:11px;line-height:1.5}
+.rp-access-svo-strip-action{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  gap:7px!important;flex:0 0 auto;width:auto!important;min-height:36px!important;
+  margin:0!important;padding:8px 12px!important;
+  border:1px solid #b9dfd3!important;border-radius:9px!important;
+  background:#fff!important;color:#087b6e!important;
+  font-size:11px!important;line-height:1.35!important;font-weight:800!important;
+  cursor:pointer;white-space:nowrap;
+}
+.rp-access-svo-strip-action:hover,.rp-access-svo-strip-action[aria-pressed="true"]{background:#e7f5ef!important;border-color:#89c6b6!important}
+.rp-access-svo-strip-action:focus-visible{outline:3px solid #79d2c2!important;outline-offset:2px}
+.rp-access-svo-chip{
+  display:inline-flex;align-self:flex-start;max-width:100%;margin-top:8px;
+  padding:4px 8px;border:1px solid #d4e8e0;border-radius:7px;
+  background:#edf7f2;color:#34766b;font-size:10px;line-height:1.35;font-weight:700;
+}
+@media(max-width:690px){
+  .rp-access-svo-strip{flex-direction:column;align-items:stretch}
+  .rp-access-svo-strip-action{align-self:flex-start;white-space:normal}
+}
 </style>
